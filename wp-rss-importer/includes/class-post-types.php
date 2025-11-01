@@ -14,7 +14,6 @@ class WP_RSS_Importer_Post_Types {
      */
     public function register_post_types() {
         $this->register_feed_source_post_type();
-        $this->register_feed_item_post_type();
     }
 
     /**
@@ -56,46 +55,6 @@ class WP_RSS_Importer_Post_Types {
         );
 
         register_post_type( 'feed_source', $args );
-    }
-
-    /**
-     * Register Feed Item custom post type
-     */
-    private function register_feed_item_post_type() {
-        $labels = array(
-            'name'                  => _x( 'Feed Items', 'Post type general name', 'wp-rss-importer' ),
-            'singular_name'         => _x( 'Feed Item', 'Post type singular name', 'wp-rss-importer' ),
-            'menu_name'             => _x( 'Feed Items', 'Admin Menu text', 'wp-rss-importer' ),
-            'name_admin_bar'        => _x( 'Feed Item', 'Add New on Toolbar', 'wp-rss-importer' ),
-            'add_new'               => __( 'Add New', 'wp-rss-importer' ),
-            'add_new_item'          => __( 'Add New Feed Item', 'wp-rss-importer' ),
-            'new_item'              => __( 'New Feed Item', 'wp-rss-importer' ),
-            'edit_item'             => __( 'Edit Feed Item', 'wp-rss-importer' ),
-            'view_item'             => __( 'View Feed Item', 'wp-rss-importer' ),
-            'all_items'             => __( 'Feed Items', 'wp-rss-importer' ),
-            'search_items'          => __( 'Search Feed Items', 'wp-rss-importer' ),
-            'parent_item_colon'     => __( 'Parent Feed Items:', 'wp-rss-importer' ),
-            'not_found'             => __( 'No feed items found.', 'wp-rss-importer' ),
-            'not_found_in_trash'    => __( 'No feed items found in Trash.', 'wp-rss-importer' ),
-        );
-
-        $args = array(
-            'labels'                => $labels,
-            'public'                => true,
-            'publicly_queryable'    => true,
-            'show_ui'               => true,
-            'show_in_menu'          => 'edit.php?post_type=feed_source',
-            'query_var'             => true,
-            'rewrite'               => array( 'slug' => 'feed-item' ),
-            'capability_type'       => 'post',
-            'has_archive'           => true,
-            'hierarchical'          => false,
-            'menu_position'         => null,
-            'supports'              => array( 'title', 'editor', 'thumbnail', 'excerpt' ),
-            'show_in_rest'          => true,
-        );
-
-        register_post_type( 'feed_item', $args );
     }
 
     /**

@@ -78,7 +78,7 @@ class WP_RSS_Importer_Feed_Importer {
      */
     private function item_exists( $permalink ) {
         $args = array(
-            'post_type'      => 'feed_item',
+            'post_type'      => 'post',
             'post_status'    => 'any',
             'posts_per_page' => 1,
             'meta_query'     => array(
@@ -111,20 +111,42 @@ class WP_RSS_Importer_Feed_Importer {
         $author_name = $author ? $author->get_name() : '';
         $date = $item->get_date( 'Y-m-d H:i:s' );
 
-        // Create the post
+        // Get or create the "News" category
+        $news_category = get_term_by( 'slug', 'news', 'category' );
+        if ( ! $news_category ) {
+            $news_category_id = wp_insert_term( 'News', 'category', array( 'slug' => 'news' ) );
+            if ( is_wp_error( $news_category_id ) ) {
+                $news_category_id = 0;
+            } else {
+                $news_category_id = $news_category_id['term_id'];
+            }
+        } else {
+            $news_category_id = $news_category->term_id;
+        }
+
+        // Create the post as regular WordPress post
         $post_data = array(
-            'post_type'    => 'feed_item',
-            'post_title'   => sanitize_text_field( $title ),
-            'post_content' => wp_kses_post( $content ),
-            'post_excerpt' => sanitize_text_field( $excerpt ),
-            'post_status'  => 'publish',
-            'post_date'    => $date ? $date : current_time( 'mysql' ),
+            'post_type'     => 'post',
+            'post_title'    => sanitize_text_field( $title ),
+            'post_content'  => wp_kses_post( $content ),
+            'post_excerpt'  => sanitize_text_field( $excerpt ),
+            'post_status'   => 'publish',
+            'post_date'     => $date ? $date : current_time( 'mysql' ),
+            'post_category' => array( $news_category_id ),
         );
 
         $post_id = wp_insert_post( $post_data );
 
         if ( is_wp_error( $post_id ) || ! $post_id ) {
             return false;
+        }
+
+        // Get feed source name for tagging
+        $source_post = get_post( $source_id );
+        if ( $source_post ) {
+            $source_name = $source_post->post_title;
+            // Create or assign tag based on feed source name
+            wp_set_post_tags( $post_id, $source_name, true );
         }
 
         // Save metadata
