@@ -44,6 +44,7 @@ class WP_RSS_Importer {
         require_once WP_RSS_IMPORTER_PLUGIN_DIR . 'includes/class-post-types.php';
         require_once WP_RSS_IMPORTER_PLUGIN_DIR . 'includes/class-admin.php';
         require_once WP_RSS_IMPORTER_PLUGIN_DIR . 'includes/class-feed-importer.php';
+        require_once WP_RSS_IMPORTER_PLUGIN_DIR . 'includes/class-permalink-handler.php';
         require_once WP_RSS_IMPORTER_PLUGIN_DIR . 'includes/class-cron.php';
 
         $this->loader = new WP_RSS_Importer_Loader();
@@ -66,11 +67,17 @@ class WP_RSS_Importer {
     }
 
     /**
-     * Register cron hooks for feed importing
+     * Register cron hooks for feed importing and permalink handling
      */
     private function define_public_hooks() {
         $cron = new WP_RSS_Importer_Cron();
         $this->loader->add_action( 'wp_rss_importer_fetch_feeds', $cron, 'fetch_all_feeds' );
+
+        // Permalink handler to redirect News posts to source URLs
+        $permalink_handler = new WP_RSS_Importer_Permalink_Handler();
+        $this->loader->add_filter( 'post_link', $permalink_handler, 'filter_post_link', 10, 2 );
+        $this->loader->add_filter( 'post_type_link', $permalink_handler, 'filter_post_link', 10, 2 );
+        $this->loader->add_action( 'wp_footer', $permalink_handler, 'add_external_link_script' );
     }
 
     /**
