@@ -161,8 +161,8 @@ class WP_RSS_Importer_Shortcode {
         $cols = intval( $atts['cols'] );
         $cols_class = 'cols-' . $cols;
 
-        // Simple container with just cols class and post-grid
-        echo '<div class="post-grid ' . esc_attr( $cols_class ) . '">';
+        // Match Mura's archive.php container structure
+        echo '<div id="primary" class="content-area post-grid ' . esc_attr( $cols_class ) . ' grid">';
 
         while ( $query->have_posts() ) {
             $query->the_post();
@@ -170,18 +170,20 @@ class WP_RSS_Importer_Shortcode {
             $source_permalink = get_post_meta( get_the_ID(), '_source_permalink', true );
             $has_thumbnail = has_post_thumbnail();
 
-            // Simple article classes
-            $article_classes = array(
-                'post',
+            // Mura-compatible faux classes for post_class()
+            $faux_classes = array(
                 'article',
+                'has-excerpt',
+                'thumbnail-landscape',
+                'default',
             );
 
             if ( $has_thumbnail ) {
-                $article_classes[] = 'has-post-thumbnail';
+                $faux_classes[] = 'has-post-thumbnail';
             }
 
             ?>
-            <article id="post-<?php echo get_the_ID(); ?>" class="<?php echo esc_attr( implode( ' ', $article_classes ) ); ?>">
+            <article id="post-<?php echo get_the_ID(); ?>" <?php post_class( $faux_classes ); ?>>
 
                 <div class="post-inner">
 
