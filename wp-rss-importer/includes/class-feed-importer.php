@@ -293,6 +293,19 @@ class WP_RSS_Importer_Feed_Importer {
             return false;
         }
 
+        // Fix file permissions to ensure WordPress can modify the file
+        $uploaded_file_path = get_attached_file( $attachment_id );
+        if ( $uploaded_file_path && file_exists( $uploaded_file_path ) ) {
+            // Set file permissions to 0644 (readable by all, writable by owner)
+            @chmod( $uploaded_file_path, 0644 );
+
+            // Also fix permissions on the directory if needed
+            $upload_dir = dirname( $uploaded_file_path );
+            if ( is_dir( $upload_dir ) ) {
+                @chmod( $upload_dir, 0755 );
+            }
+        }
+
         // Set as featured image
         set_post_thumbnail( $post_id, $attachment_id );
 
