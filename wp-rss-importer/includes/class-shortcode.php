@@ -1,6 +1,7 @@
 <?php
 /**
  * Shortcode Handler
+ * Outputs HTML matching Mura theme structure
  */
 
 if ( ! defined( 'WPINC' ) ) {
@@ -25,6 +26,7 @@ class WP_RSS_Importer_Shortcode {
             'pagination' => 'on',    // Enable/disable pagination
             'template'   => 'default', // Template to use
             'page'       => 1,       // Current page
+            'layout'     => 'list',  // list, cols-2, cols-3
         ), $atts, 'wp-rss-aggregator' );
 
         // Build query args
@@ -117,7 +119,7 @@ class WP_RSS_Importer_Shortcode {
                 );
             } else {
                 // No sources in this category, return empty
-                return '<p>' . __( 'No feed items found.', 'wp-rss-importer' ) . '</p>';
+                return '<p class="wp-rss-aggregator-no-items">' . __( 'No feed items found.', 'wp-rss-importer' ) . '</p>';
             }
         }
 
@@ -133,14 +135,14 @@ class WP_RSS_Importer_Shortcode {
         ob_start();
 
         if ( $feed_query->have_posts() ) {
-            $this->render_template( $atts['template'], $feed_query );
+            $this->render_template( $atts['template'], $feed_query, $atts );
 
             // Pagination
             if ( $atts['pagination'] === 'on' && $feed_query->max_num_pages > 1 ) {
                 $this->render_pagination( $feed_query );
             }
         } else {
-            echo '<p>' . __( 'No feed items found.', 'wp-rss-importer' ) . '</p>';
+            echo '<p class="wp-rss-aggregator-no-items">' . __( 'No feed items found.', 'wp-rss-importer' ) . '</p>';
         }
 
         wp_reset_postdata();
@@ -149,13 +151,16 @@ class WP_RSS_Importer_Shortcode {
     }
 
     /**
-     * Render template
+     * Render template - Uses Mura article structure
      *
      * @param string $template Template name
      * @param WP_Query $query The query object
+     * @param array $atts Shortcode attributes
      */
-    private function render_template( $template, $query ) {
-        echo '<div class="wp-rss-aggregator-items">';
+    private function render_template( $template, $query, $atts ) {
+        $layout_class = sanitize_html_class( $atts['layout'] );
+
+        echo '<div class="wp-rss-aggregator-items ' . esc_attr( $layout_class ) . ' post-grid">';
 
         while ( $query->have_posts() ) {
             $query->the_post();
@@ -164,55 +169,87 @@ class WP_RSS_Importer_Shortcode {
             $source_author = get_post_meta( get_the_ID(), '_source_author', true );
             $source_id = get_post_meta( get_the_ID(), '_source_id', true );
             $source_name = $source_id ? get_the_title( $source_id ) : '';
+            $has_thumbnail_class = has_post_thumbnail() ? 'has-post-thumbnail' : '';
 
             ?>
-            <article class="feed-item" id="feed-item-<?php echo get_the_ID(); ?>">
-                <?php if ( has_post_thumbnail() ) : ?>
-                    <div class="feed-item-thumbnail">
-                        <a href="<?php echo esc_url( $source_permalink ); ?>" target="_blank" rel="noopener">
-                            <?php the_post_thumbnail( 'medium' ); ?>
-                        </a>
-                    </div>
-                <?php endif; ?>
+            <article id="feed-item-<?php echo get_the_ID(); ?>" class="feed-item article <?php echo esc_attr( $has_thumbnail_class ); ?>">
+                <div class="post-inner">
 
-                <div class="feed-item-content">
-                    <h3 class="feed-item-title">
-                        <a href="<?php echo esc_url( $source_permalink ); ?>" target="_blank" rel="noopener">
-                            <?php the_title(); ?>
-                        </a>
-                    </h3>
-
-                    <?php if ( $source_author || $source_name ) : ?>
-                    <div class="feed-item-meta">
-                        <?php if ( $source_author ) : ?>
-                            <span class="feed-item-author"><?php _e( 'By', 'wp-rss-importer' ); ?> <?php echo esc_html( $source_author ); ?></span>
-                        <?php endif; ?>
-                        <?php if ( $source_name ) : ?>
-                            <span class="feed-item-source"><?php _e( 'from', 'wp-rss-importer' ); ?> <?php echo esc_html( $source_name ); ?></span>
-                        <?php endif; ?>
-                    </div>
+                    <?php if ( has_post_thumbnail() ) : ?>
+                        <div class="thumbnail-wrapper">
+                            <figure class="post-thumbnail">
+                                <a href="<?php echo esc_url( $source_permalink ); ?>" target="_blank" rel="noopener noreferrer">
+                                    <?php the_post_thumbnail( 'medium' ); ?>
+                                </a>
+                            </figure>
+                        </div>
                     <?php endif; ?>
 
-                    <div class="feed-item-excerpt">
-                        <?php the_excerpt(); ?>
-                    </div>
+                    <div class="entry-wrapper">
 
-                    <div class="feed-item-footer">
-                        <a href="<?php echo esc_url( $source_permalink ); ?>" target="_blank" rel="noopener" class="read-more">
-                            <?php _e( 'Read More', 'wp-rss-importer' ); ?> &raquo;
-                        </a>
-                        <span class="feed-item-date"><?php echo get_the_date(); ?></span>
-                    </div>
-                </div>
+                        <header class="entry-header">
+                            <h3 class="entry-title">
+                                <a href="<?php echo esc_url( $source_permalink ); ?>" target="_blank" rel="noopener noreferrer">
+                                    <?php the_title(); ?>
+                                </a>
+                            </h3>
+
+                            <?php if ( $source_author || $source_name || get_the_date() ) : ?>
+                            <div class="entry-meta after-title">
+                                <ul class="after-title-meta">
+
+                                    <?php if ( $source_author ) : ?>
+                                        <li class="entry-meta-author">
+                                            <i><?php _e( 'by', 'wp-rss-importer' ); ?></i>
+                                            <?php echo esc_html( $source_author ); ?>
+                                        </li>
+                                    <?php endif; ?>
+
+                                    <?php if ( $source_name ) : ?>
+                                        <li class="entry-meta-source">
+                                            <i><?php _e( 'from', 'wp-rss-importer' ); ?></i>
+                                            <?php echo esc_html( $source_name ); ?>
+                                        </li>
+                                    <?php endif; ?>
+
+                                    <li class="entry-meta-date">
+                                        <time datetime="<?php echo get_the_date( 'c' ); ?>">
+                                            <?php echo get_the_date(); ?>
+                                        </time>
+                                    </li>
+
+                                </ul>
+                            </div>
+                            <?php endif; ?>
+                        </header>
+
+                        <?php if ( has_excerpt() || get_the_excerpt() ) : ?>
+                        <div class="entry-excerpt">
+                            <?php the_excerpt(); ?>
+                        </div>
+                        <?php endif; ?>
+
+                        <div class="continue-reading">
+                            <a href="<?php echo esc_url( $source_permalink ); ?>"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               class="read-more-link">
+                                <?php _e( 'Read More', 'wp-rss-importer' ); ?>
+                            </a>
+                        </div>
+
+                    </div><!-- .entry-wrapper -->
+
+                </div><!-- .post-inner -->
             </article>
             <?php
         }
 
-        echo '</div>';
+        echo '</div><!-- .wp-rss-aggregator-items -->';
     }
 
     /**
-     * Render pagination
+     * Render pagination - Matches WordPress/Mura style
      *
      * @param WP_Query $query The query object
      */
@@ -221,14 +258,21 @@ class WP_RSS_Importer_Shortcode {
             'total'     => $query->max_num_pages,
             'current'   => max( 1, get_query_var( 'paged' ) ),
             'format'    => '?paged=%#%',
-            'prev_text' => __( '&laquo; Previous', 'wp-rss-importer' ),
-            'next_text' => __( 'Next &raquo;', 'wp-rss-importer' ),
+            'type'      => 'array',
+            'prev_text' => __( '← Previous', 'wp-rss-importer' ),
+            'next_text' => __( 'Next →', 'wp-rss-importer' ),
         ) );
 
         if ( $pagination ) {
-            echo '<div class="wp-rss-aggregator-pagination">';
-            echo $pagination;
+            echo '<nav class="wp-rss-aggregator-pagination" role="navigation">';
+            echo '<div class="nav-links">';
+
+            foreach ( $pagination as $page ) {
+                echo $page;
+            }
+
             echo '</div>';
+            echo '</nav>';
         }
     }
 }

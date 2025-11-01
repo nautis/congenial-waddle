@@ -1,167 +1,354 @@
 /**
  * Public Styles for WP RSS Importer
- * Designed to integrate with Mura theme
+ * Fully integrated with Mura theme design system
  */
 
-/* Feed Items Container */
+/* Feed Items Container - Uses Mura's post-grid pattern */
 .wp-rss-aggregator-items {
-    margin: 20px 0;
-    clear: both;
+	display: flex;
+	flex-wrap: wrap;
+	margin: var(--global-elements-margin, 1.5625rem) 0;
+	clear: both;
 }
 
-/* Individual Feed Item */
-.feed-item {
-    margin-bottom: 30px;
-    padding-bottom: 30px;
-    border-bottom: 1px solid #e5e5e5;
-    display: flex;
-    gap: 20px;
-    align-items: flex-start;
+/* Individual Feed Item - Matches Mura article structure */
+.wp-rss-aggregator-items article.feed-item {
+	flex: 0 1 100%;
+	margin: var(--post-margin, 1.5625rem);
+	min-width: 0;
+	position: relative;
+	border-bottom: 1px solid var(--light-grey, #cfd0d2);
+	padding-bottom: var(--post-margin, 1.5625rem);
 }
 
-.feed-item:last-child {
-    border-bottom: none;
+.wp-rss-aggregator-items article.feed-item:last-child {
+	border-bottom: none;
 }
 
-/* Thumbnail */
-.feed-item-thumbnail {
-    flex-shrink: 0;
-    width: 200px;
+/* Post Inner - Matches Mura structure */
+.feed-item .post-inner {
+	position: relative;
+	display: flex;
+	gap: var(--post-margin, 1.5625rem);
 }
 
-.feed-item-thumbnail img {
-    width: 100%;
-    height: auto;
-    border-radius: 4px;
-    display: block;
+/* Thumbnail Wrapper - Matches Mura thumbnail structure */
+.feed-item .thumbnail-wrapper {
+	flex-shrink: 0;
+	width: 200px;
+	position: relative;
 }
 
-/* Content Area */
-.feed-item-content {
-    flex: 1;
+.feed-item .post-thumbnail {
+	width: 100%;
+	height: auto;
+	border-radius: var(--post-thumbnail-border-radius, 0);
+	overflow: hidden;
 }
 
-/* Title */
-.feed-item-title {
-    margin: 0 0 10px 0;
-    font-size: 1.5em;
-    line-height: 1.4;
+.feed-item .post-thumbnail img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+	transition: all 0.2s linear;
 }
 
-.feed-item-title a {
-    color: #333;
-    text-decoration: none;
-    transition: color 0.3s ease;
+.feed-item .post-thumbnail:hover img {
+	opacity: 0.9;
+	transform: scale(1.02);
 }
 
-.feed-item-title a:hover {
-    color: #0073aa;
+/* Entry Wrapper - Matches Mura entry structure */
+.feed-item .entry-wrapper {
+	flex: 1;
+	position: relative;
 }
 
-/* Meta Information */
-.feed-item-meta {
-    margin-bottom: 12px;
-    font-size: 0.9em;
-    color: #666;
+.feed-item .entry-wrapper > * {
+	margin-top: calc(var(--post-inner-elements-margin, 2rem) / 2);
+	width: 100%;
 }
 
-.feed-item-author,
-.feed-item-source {
-    margin-right: 15px;
+.feed-item .entry-wrapper > *:first-child {
+	margin-top: 0;
 }
 
-/* Excerpt */
-.feed-item-excerpt {
-    margin-bottom: 15px;
-    line-height: 1.6;
-    color: #444;
+/* Entry Header */
+.feed-item .entry-header {
+	position: relative;
 }
 
-/* Footer */
-.feed-item-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 15px;
+/* Entry Title - Uses Mura heading styles */
+.feed-item .entry-title {
+	font-size: var(--h3-font-size, 1.875rem);
+	font-weight: var(--heading-font-weight, 700);
+	letter-spacing: var(--heading-letter-spacing, -0.0625rem);
+	line-height: var(--heading-line-height, 1.25);
+	margin: 0 0 calc(var(--post-inner-elements-margin, 2rem) / 2) 0;
+	font-family: var(--title-font, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, sans-serif);
 }
 
-.feed-item-footer .read-more {
-    color: #0073aa;
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.3s ease;
+.feed-item .entry-title a {
+	color: var(--body-font-color, var(--very-dark-grey, #131315));
+	text-decoration: none;
+	transition: all 0.2s linear;
 }
 
-.feed-item-footer .read-more:hover {
-    color: #005177;
-    text-decoration: underline;
+.feed-item .entry-title a:hover {
+	color: var(--link-hover-color, var(--primary-theme-color));
 }
 
-.feed-item-date {
-    font-size: 0.9em;
-    color: #999;
+/* Entry Meta - Matches Mura meta structure */
+.feed-item .entry-meta {
+	margin-bottom: calc(var(--post-inner-elements-margin, 2rem) / 2);
 }
 
-/* Pagination */
+.feed-item .entry-meta ul {
+	display: flex;
+	flex-wrap: wrap;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	align-items: center;
+}
+
+.feed-item .entry-meta li {
+	font-size: 0.875rem;
+	line-height: 1.25;
+	margin: 0 1rem 0 0;
+	color: var(--medium-grey, #94979e);
+}
+
+.feed-item .entry-meta li:last-child {
+	margin-right: 0;
+}
+
+.feed-item .entry-meta a {
+	color: var(--medium-grey, #94979e);
+	text-decoration: none;
+	transition: all 0.2s linear;
+}
+
+.feed-item .entry-meta a:hover {
+	color: var(--link-hover-color, var(--primary-theme-color));
+}
+
+.feed-item .entry-meta i {
+	font-style: italic;
+	margin-right: 0.25rem;
+}
+
+/* Entry Excerpt */
+.feed-item .entry-excerpt {
+	line-height: var(--default-line-height, 1.5);
+	margin: 0 0 calc(var(--post-inner-elements-margin, 2rem) / 2) 0;
+	color: var(--body-font-color, var(--very-dark-grey, #131315));
+}
+
+.feed-item .entry-excerpt p {
+	margin: 0 0 1em 0;
+}
+
+.feed-item .entry-excerpt p:last-child {
+	margin-bottom: 0;
+}
+
+/* Continue Reading / Read More - Matches Mura button style */
+.feed-item .continue-reading {
+	margin-top: calc(var(--post-inner-elements-margin, 2rem) / 2);
+}
+
+.feed-item .continue-reading a,
+.feed-item .read-more-link {
+	display: inline-block;
+	padding: var(--button-padding, 1rem 1.5rem);
+	background: var(--button-background, var(--primary-theme-color));
+	color: var(--button-color, var(--white, #ffffff));
+	border-radius: var(--button-border-radius, 0);
+	font-family: var(--button-font, var(--body-font));
+	font-size: var(--button-font-size, 0.9375rem);
+	font-weight: 500;
+	text-decoration: none;
+	transition: all 0.2s linear;
+}
+
+.feed-item .continue-reading a:hover,
+.feed-item .read-more-link:hover {
+	opacity: 0.85;
+	color: var(--button-color, var(--white, #ffffff));
+}
+
+/* Entry Footer */
+.feed-item .entry-footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-top: calc(var(--post-inner-elements-margin, 2rem) / 2);
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.feed-item .entry-meta-date time {
+	font-size: 0.875rem;
+	color: var(--medium-grey, #94979e);
+}
+
+/* Grid Layout Support - 2 Column */
+.wp-rss-aggregator-items.cols-2 article.feed-item {
+	flex-basis: calc(100% / 2 - (var(--post-margin, 1.5625rem) * 2));
+	border-bottom: none;
+}
+
+.wp-rss-aggregator-items.cols-2 .feed-item .post-inner {
+	flex-direction: column;
+}
+
+.wp-rss-aggregator-items.cols-2 .feed-item .thumbnail-wrapper {
+	width: 100%;
+}
+
+/* Grid Layout Support - 3 Column */
+.wp-rss-aggregator-items.cols-3 article.feed-item {
+	flex-basis: calc(100% / 3 - (var(--post-margin, 1.5625rem) * 2));
+	border-bottom: none;
+}
+
+.wp-rss-aggregator-items.cols-3 .feed-item .post-inner {
+	flex-direction: column;
+}
+
+.wp-rss-aggregator-items.cols-3 .feed-item .thumbnail-wrapper {
+	width: 100%;
+}
+
+/* List Style - Featured image on left */
+.wp-rss-aggregator-items.list .feed-item .post-inner {
+	display: flex;
+	flex-direction: row;
+	gap: var(--post-margin, 1.5625rem);
+}
+
+/* Pagination - Matches WordPress/Mura pagination */
 .wp-rss-aggregator-pagination {
-    margin: 30px 0;
-    text-align: center;
-    clear: both;
+	margin: calc(var(--global-elements-margin, 1.5625rem) * 2) 0;
+	text-align: center;
+	clear: both;
+}
+
+.wp-rss-aggregator-pagination .nav-links {
+	display: flex;
+	justify-content: center;
+	flex-wrap: wrap;
+	gap: 0.5rem;
 }
 
 .wp-rss-aggregator-pagination .page-numbers {
-    display: inline-block;
-    padding: 8px 12px;
-    margin: 0 3px;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-    text-decoration: none;
-    color: #333;
-    transition: all 0.3s ease;
+	display: inline-block;
+	padding: 0.5rem 1rem;
+	background: var(--white, #ffffff);
+	color: var(--body-font-color, var(--very-dark-grey, #131315));
+	border: 1px solid var(--light-grey, #cfd0d2);
+	border-radius: var(--global-elements-border-radius, 0);
+	text-decoration: none;
+	font-size: 0.875rem;
+	transition: all 0.2s linear;
 }
 
 .wp-rss-aggregator-pagination .page-numbers:hover {
-    background: #0073aa;
-    color: #fff;
-    border-color: #0073aa;
+	background: var(--button-background, var(--primary-theme-color));
+	color: var(--button-color, var(--white, #ffffff));
+	border-color: var(--button-background, var(--primary-theme-color));
 }
 
 .wp-rss-aggregator-pagination .page-numbers.current {
-    background: #0073aa;
-    color: #fff;
-    border-color: #0073aa;
+	background: var(--button-background, var(--primary-theme-color));
+	color: var(--button-color, var(--white, #ffffff));
+	border-color: var(--button-background, var(--primary-theme-color));
 }
 
-/* Responsive Design */
+.wp-rss-aggregator-pagination .page-numbers.dots {
+	border: none;
+	background: none;
+}
+
+.wp-rss-aggregator-pagination .page-numbers.dots:hover {
+	background: none;
+	color: var(--body-font-color, var(--very-dark-grey, #131315));
+}
+
+/* Responsive Design - Matches Mura breakpoints */
+@media (max-width: 1024px) {
+	.wp-rss-aggregator-items.cols-3 article.feed-item {
+		flex-basis: calc(100% / 2 - (var(--post-margin, 1.5625rem) * 2));
+	}
+}
+
 @media (max-width: 768px) {
-    .feed-item {
-        flex-direction: column;
-    }
+	.wp-rss-aggregator-items article.feed-item {
+		flex-basis: 100%;
+	}
 
-    .feed-item-thumbnail {
-        width: 100%;
-    }
+	.wp-rss-aggregator-items.cols-2 article.feed-item,
+	.wp-rss-aggregator-items.cols-3 article.feed-item {
+		flex-basis: 100%;
+	}
 
-    .feed-item-footer {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
+	.feed-item .post-inner {
+		flex-direction: column;
+	}
+
+	.feed-item .thumbnail-wrapper {
+		width: 100%;
+	}
+
+	.feed-item .entry-footer {
+		flex-direction: column;
+		align-items: flex-start;
+	}
 }
 
-/* Mura Theme Integration */
-.mura .feed-item-title a {
-    font-family: inherit;
-}
+@media (max-width: 600px) {
+	.feed-item .entry-title {
+		font-size: var(--h4-font-size, 1.5rem);
+	}
 
-.mura .feed-item {
-    font-family: inherit;
+	.feed-item .entry-meta li {
+		margin-bottom: 0.5rem;
+	}
 }
 
 /* No items message */
-.wp-rss-aggregator-items + p {
-    text-align: center;
-    color: #666;
-    font-style: italic;
-    padding: 40px 20px;
+.wp-rss-aggregator-items:empty + p,
+.wp-rss-aggregator-no-items {
+	text-align: center;
+	color: var(--medium-grey, #94979e);
+	font-style: italic;
+	padding: calc(var(--global-elements-margin, 1.5625rem) * 2);
+}
+
+/* Source Badge - Optional styling for source identification */
+.feed-item .source-badge {
+	display: inline-block;
+	padding: 0.25rem 0.5rem;
+	background: var(--very-light-grey, #f2f2f3);
+	color: var(--dark-grey, #44464b);
+	font-size: 0.75rem;
+	border-radius: 3px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	font-weight: 600;
+}
+
+/* External link indicator */
+.feed-item a[target="_blank"]::after {
+	content: "↗";
+	display: inline-block;
+	margin-left: 0.25rem;
+	font-size: 0.8em;
+	opacity: 0.6;
+}
+
+.feed-item .entry-title a[target="_blank"]::after {
+	display: none;
 }

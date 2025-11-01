@@ -57,6 +57,7 @@ This displays all imported feed items.
 | `category` | Category slug(s) | `category="sports"` or `category="sports,tech"` |
 | `pagination` | Enable/disable pagination | `pagination="on"` (default) or `pagination="off"` |
 | `page` | Starting page number | `page="2"` |
+| `layout` | Display layout style | `layout="list"` (default), `layout="cols-2"`, or `layout="cols-3"` |
 
 #### Examples
 
@@ -78,6 +79,16 @@ This displays all imported feed items.
 **Display 5 items without pagination:**
 ```
 [wp-rss-aggregator limit="5" pagination="off"]
+```
+
+**Display items in 2-column grid:**
+```
+[wp-rss-aggregator layout="cols-2" limit="6"]
+```
+
+**Display items in 3-column grid:**
+```
+[wp-rss-aggregator layout="cols-3" category="tech" limit="9"]
 ```
 
 ### Using in Theme Files
@@ -115,22 +126,57 @@ Each feed item displays:
 - **Date**: Publication date
 - **Read More Link**: Direct link to original article
 
-## Styling
+## Mura Theme Integration
 
-The plugin includes CSS designed to integrate with the Mura theme. The styles are responsive and can be customized by:
+This plugin is **fully integrated** with the Mura theme design system. The output HTML structure matches Mura's article templates exactly, ensuring seamless visual integration.
 
-1. Editing `/public/css/public.css` in the plugin folder
-2. Or overriding styles in your theme's CSS file
+### Design Integration Features
+
+- **CSS Variables**: Uses Mura's CSS custom properties for colors, spacing, typography, and layout
+- **HTML Structure**: Matches Mura's `article > post-inner > thumbnail-wrapper/entry-wrapper` pattern
+- **Typography**: Inherits Mura's heading and body font styles
+- **Responsive Design**: Uses Mura's breakpoints (1024px, 768px, 600px)
+- **Meta Display**: Follows Mura's entry-meta styling with author, source, and date
+- **Buttons**: Read More links styled to match Mura's button components
+- **Grid Layouts**: Supports Mura's post-grid patterns (list, cols-2, cols-3)
+
+### Mura CSS Variables Used
+
+The plugin automatically adapts to your Mura theme customizations by using these CSS variables:
+
+- `--body-font-color`, `--body-font-size`, `--body-font`
+- `--title-font`, `--heading-font-weight`, `--heading-letter-spacing`
+- `--h1-font-size`, `--h2-font-size`, `--h3-font-size`
+- `--link-color`, `--link-hover-color`
+- `--button-background`, `--button-color`, `--button-padding`
+- `--post-margin`, `--post-inner-elements-margin`
+- `--post-thumbnail-border-radius`
+- `--light-grey`, `--medium-grey`, `--dark-grey`
+- And more...
+
+This means the plugin will automatically match any color scheme or typography changes you make in the Mura theme customizer.
+
+## Styling & Customization
+
+The styles are responsive and can be further customized:
+
+1. Edit `/public/css/public.css` in the plugin folder
+2. Override styles in your child theme's CSS file
+3. Use Mura's theme customizer to change colors and fonts globally
 
 ### Main CSS Classes
 
-- `.wp-rss-aggregator-items` - Container for all feed items
-- `.feed-item` - Individual feed item
-- `.feed-item-thumbnail` - Featured image
-- `.feed-item-title` - Item title
-- `.feed-item-meta` - Author and source info
-- `.feed-item-excerpt` - Content excerpt
-- `.feed-item-footer` - Read more link and date
+- `.wp-rss-aggregator-items` - Container (uses Mura's `.post-grid` pattern)
+- `.feed-item` or `.article` - Individual feed item (Mura compatible)
+- `.post-inner` - Inner container for thumbnail and content
+- `.thumbnail-wrapper` - Featured image wrapper
+- `.post-thumbnail` - Featured image (follows Mura structure)
+- `.entry-wrapper` - Content wrapper
+- `.entry-header` - Header container
+- `.entry-title` - Item title (uses Mura heading styles)
+- `.entry-meta` - Author, source, and date info (Mura compatible)
+- `.entry-excerpt` - Content excerpt
+- `.continue-reading` - Read more link container
 - `.wp-rss-aggregator-pagination` - Pagination controls
 
 ## Automatic Updates
