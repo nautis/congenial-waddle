@@ -1,7 +1,7 @@
 <?php
 /**
  * Shortcode Handler
- * Outputs HTML matching Mura theme structure
+ * Outputs HTML matching Mura theme structure exactly
  */
 
 if ( ! defined( 'WPINC' ) ) {
@@ -26,7 +26,7 @@ class WP_RSS_Importer_Shortcode {
             'pagination' => 'on',    // Enable/disable pagination
             'template'   => 'default', // Template to use
             'page'       => 1,       // Current page
-            'layout'     => 'list',  // list, cols-2, cols-3
+            'cols'       => '4',     // Number of columns (1, 2, 3, 4)
         ), $atts, 'wp-rss-aggregator' );
 
         // Build query args
@@ -151,16 +151,18 @@ class WP_RSS_Importer_Shortcode {
     }
 
     /**
-     * Render template - Uses Mura article structure
+     * Render template - Matches Mura exactly
      *
      * @param string $template Template name
      * @param WP_Query $query The query object
      * @param array $atts Shortcode attributes
      */
     private function render_template( $template, $query, $atts ) {
-        $layout_class = sanitize_html_class( $atts['layout'] );
+        $cols = intval( $atts['cols'] );
+        $cols_class = 'cols-' . $cols;
 
-        echo '<div class="wp-rss-aggregator-items ' . esc_attr( $layout_class ) . ' post-grid">';
+        // Output container matching Mura's structure
+        echo '<div class="content-area post-grid ' . esc_attr( $cols_class ) . ' grid">';
 
         while ( $query->have_posts() ) {
             $query->the_post();
@@ -169,17 +171,44 @@ class WP_RSS_Importer_Shortcode {
             $source_author = get_post_meta( get_the_ID(), '_source_author', true );
             $source_id = get_post_meta( get_the_ID(), '_source_id', true );
             $source_name = $source_id ? get_the_title( $source_id ) : '';
-            $has_thumbnail_class = has_post_thumbnail() ? 'has-post-thumbnail' : '';
+
+            // Build article classes
+            $article_classes = array(
+                'post-' . get_the_ID(),
+                'post',
+                'type-post',
+                'status-publish',
+                'format-standard',
+            );
+
+            if ( has_post_thumbnail() ) {
+                $article_classes[] = 'has-post-thumbnail';
+            }
+
+            $article_classes[] = 'hentry';
+            $article_classes[] = 'article';
+
+            if ( has_excerpt() || get_the_excerpt() ) {
+                $article_classes[] = 'has-excerpt';
+            }
+
+            $article_classes[] = 'thumbnail-landscape'; // Default aspect ratio
+            $article_classes[] = 'default'; // Post style
 
             ?>
-            <article id="feed-item-<?php echo get_the_ID(); ?>" class="feed-item article <?php echo esc_attr( $has_thumbnail_class ); ?>">
+            <article id="post-<?php echo get_the_ID(); ?>" class="<?php echo esc_attr( implode( ' ', $article_classes ) ); ?>">
+
+                <div class="formats-key">
+                    <!-- Format indicators would go here -->
+                </div>
+
                 <div class="post-inner">
 
                     <?php if ( has_post_thumbnail() ) : ?>
                         <div class="thumbnail-wrapper">
                             <figure class="post-thumbnail">
                                 <a href="<?php echo esc_url( $source_permalink ); ?>" target="_blank" rel="noopener noreferrer">
-                                    <?php the_post_thumbnail( 'medium' ); ?>
+                                    <?php the_post_thumbnail( 'medium_large' ); ?>
                                 </a>
                             </figure>
                         </div>
@@ -188,91 +217,65 @@ class WP_RSS_Importer_Shortcode {
                     <div class="entry-wrapper">
 
                         <header class="entry-header">
+
+                            <div class="formats-key">
+                                <!-- Format indicators would go here -->
+                            </div>
+
                             <h3 class="entry-title">
-                                <a href="<?php echo esc_url( $source_permalink ); ?>" target="_blank" rel="noopener noreferrer">
+                                <a href="<?php echo esc_url( $source_permalink ); ?>" rel="bookmark">
                                     <?php the_title(); ?>
                                 </a>
                             </h3>
 
-                            <?php if ( $source_author || $source_name || get_the_date() ) : ?>
-                            <div class="entry-meta after-title">
-                                <ul class="after-title-meta">
-
-                                    <?php if ( $source_author ) : ?>
-                                        <li class="entry-meta-author">
-                                            <i><?php _e( 'by', 'wp-rss-importer' ); ?></i>
-                                            <?php echo esc_html( $source_author ); ?>
-                                        </li>
-                                    <?php endif; ?>
-
-                                    <?php if ( $source_name ) : ?>
-                                        <li class="entry-meta-source">
-                                            <i><?php _e( 'from', 'wp-rss-importer' ); ?></i>
-                                            <?php echo esc_html( $source_name ); ?>
-                                        </li>
-                                    <?php endif; ?>
-
-                                    <li class="entry-meta-date">
-                                        <time datetime="<?php echo get_the_date( 'c' ); ?>">
-                                            <?php echo get_the_date(); ?>
-                                        </time>
-                                    </li>
-
-                                </ul>
-                            </div>
-                            <?php endif; ?>
                         </header>
 
                         <?php if ( has_excerpt() || get_the_excerpt() ) : ?>
-                        <div class="entry-excerpt">
-                            <?php the_excerpt(); ?>
+                        <div class="entry-content excerpt">
+                            <?php echo wp_trim_words( get_the_excerpt(), 30, '...' ); ?>
                         </div>
                         <?php endif; ?>
-
-                        <div class="continue-reading">
-                            <a href="<?php echo esc_url( $source_permalink ); ?>"
-                               target="_blank"
-                               rel="noopener noreferrer"
-                               class="read-more-link">
-                                <?php _e( 'Read More', 'wp-rss-importer' ); ?>
-                            </a>
-                        </div>
 
                     </div><!-- .entry-wrapper -->
 
                 </div><!-- .post-inner -->
+
             </article>
             <?php
         }
 
-        echo '</div><!-- .wp-rss-aggregator-items -->';
+        echo '</div><!-- .content-area -->';
     }
 
     /**
-     * Render pagination - Matches WordPress/Mura style
+     * Render pagination - Matches Mura/WordPress exactly
      *
      * @param WP_Query $query The query object
      */
     private function render_pagination( $query ) {
-        $pagination = paginate_links( array(
-            'total'     => $query->max_num_pages,
-            'current'   => max( 1, get_query_var( 'paged' ) ),
-            'format'    => '?paged=%#%',
-            'type'      => 'array',
-            'prev_text' => __( '← Previous', 'wp-rss-importer' ),
-            'next_text' => __( 'Next →', 'wp-rss-importer' ),
-        ) );
+        ?>
+        <nav class="navigation pagination" aria-label="Posts pagination">
+            <h2 class="screen-reader-text"><?php _e( 'Posts pagination', 'wp-rss-importer' ); ?></h2>
+            <div class="nav-links">
+                <ul class="page-numbers">
+                    <?php
+                    $pagination = paginate_links( array(
+                        'total'     => $query->max_num_pages,
+                        'current'   => max( 1, get_query_var( 'paged' ) ),
+                        'type'      => 'array',
+                        'prev_text' => '<span>' . __( 'Older Posts', 'wp-rss-importer' ) . '</span>',
+                        'next_text' => '<span>' . __( 'Newer Posts', 'wp-rss-importer' ) . '</span>',
+                    ) );
 
-        if ( $pagination ) {
-            echo '<nav class="wp-rss-aggregator-pagination" role="navigation">';
-            echo '<div class="nav-links">';
-
-            foreach ( $pagination as $page ) {
-                echo $page;
-            }
-
-            echo '</div>';
-            echo '</nav>';
-        }
+                    if ( $pagination ) {
+                        foreach ( $pagination as $page ) {
+                            echo '<li>' . $page . '</li>';
+                        }
+                    }
+                    ?>
+                </ul>
+            </div>
+        </nav>
+        <?php
     }
 }
