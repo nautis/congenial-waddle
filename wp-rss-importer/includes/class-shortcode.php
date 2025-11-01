@@ -1,7 +1,7 @@
 <?php
 /**
  * Shortcode Handler
- * Outputs HTML matching Mura theme structure exactly
+ * Outputs HTML that integrates with Mura theme
  */
 
 if ( ! defined( 'WPINC' ) ) {
@@ -151,7 +151,7 @@ class WP_RSS_Importer_Shortcode {
     }
 
     /**
-     * Render template - Matches Mura exactly
+     * Render template
      *
      * @param string $template Template name
      * @param WP_Query $query The query object
@@ -161,50 +161,31 @@ class WP_RSS_Importer_Shortcode {
         $cols = intval( $atts['cols'] );
         $cols_class = 'cols-' . $cols;
 
-        // Output container matching Mura's structure
-        echo '<div class="content-area post-grid ' . esc_attr( $cols_class ) . ' grid">';
+        // Simple container with just cols class and post-grid
+        echo '<div class="post-grid ' . esc_attr( $cols_class ) . '">';
 
         while ( $query->have_posts() ) {
             $query->the_post();
 
             $source_permalink = get_post_meta( get_the_ID(), '_source_permalink', true );
-            $source_author = get_post_meta( get_the_ID(), '_source_author', true );
-            $source_id = get_post_meta( get_the_ID(), '_source_id', true );
-            $source_name = $source_id ? get_the_title( $source_id ) : '';
+            $has_thumbnail = has_post_thumbnail();
 
-            // Build article classes
+            // Simple article classes
             $article_classes = array(
-                'post-' . get_the_ID(),
                 'post',
-                'type-post',
-                'status-publish',
-                'format-standard',
+                'article',
             );
 
-            if ( has_post_thumbnail() ) {
+            if ( $has_thumbnail ) {
                 $article_classes[] = 'has-post-thumbnail';
             }
-
-            $article_classes[] = 'hentry';
-            $article_classes[] = 'article';
-
-            if ( has_excerpt() || get_the_excerpt() ) {
-                $article_classes[] = 'has-excerpt';
-            }
-
-            $article_classes[] = 'thumbnail-landscape'; // Default aspect ratio
-            $article_classes[] = 'default'; // Post style
 
             ?>
             <article id="post-<?php echo get_the_ID(); ?>" class="<?php echo esc_attr( implode( ' ', $article_classes ) ); ?>">
 
-                <div class="formats-key">
-                    <!-- Format indicators would go here -->
-                </div>
-
                 <div class="post-inner">
 
-                    <?php if ( has_post_thumbnail() ) : ?>
+                    <?php if ( $has_thumbnail ) : ?>
                         <div class="thumbnail-wrapper">
                             <figure class="post-thumbnail">
                                 <a href="<?php echo esc_url( $source_permalink ); ?>" target="_blank" rel="noopener noreferrer">
@@ -217,17 +198,11 @@ class WP_RSS_Importer_Shortcode {
                     <div class="entry-wrapper">
 
                         <header class="entry-header">
-
-                            <div class="formats-key">
-                                <!-- Format indicators would go here -->
-                            </div>
-
                             <h3 class="entry-title">
                                 <a href="<?php echo esc_url( $source_permalink ); ?>" rel="bookmark">
                                     <?php the_title(); ?>
                                 </a>
                             </h3>
-
                         </header>
 
                         <?php if ( has_excerpt() || get_the_excerpt() ) : ?>
@@ -244,11 +219,11 @@ class WP_RSS_Importer_Shortcode {
             <?php
         }
 
-        echo '</div><!-- .content-area -->';
+        echo '</div><!-- .post-grid -->';
     }
 
     /**
-     * Render pagination - Matches Mura/WordPress exactly
+     * Render pagination
      *
      * @param WP_Query $query The query object
      */
