@@ -195,24 +195,59 @@ class WP_RSS_Importer_Feed_Importer {
      * @return string|bool Image URL or false
      */
     private function get_featured_image( $item ) {
-        // Try to get enclosure (media attachment)
-        $enclosure = $item->get_enclosure();
-        if ( $enclosure && $enclosure->get_type() && strpos( $enclosure->get_type(), 'image/' ) === 0 ) {
-            return $enclosure->get_link();
-        }
-
-        // Try to get image from content
-        $content = $item->get_content();
-        preg_match( '/<img[^>]+src=["\']([^"\']+)["\'][^>]*>/i', $content, $matches );
-
-        if ( ! empty( $matches[1] ) ) {
-            return $matches[1];
-        }
-
-        // Try media:thumbnail or media:content
-        $namespaces = $item->get_item_tags( '', 'thumbnail' );
-        if ( ! empty( $namespaces ) ) {
+        // Method 1: Try media:thumbnail namespace (common in RSS feeds)
+        $namespaces = $item->get_item_tags( 'http://search.yahoo.com/mrss/', 'thumbnail' );
+        if ( ! empty( $namespaces[0]['attribs']['']['url'] ) ) {
             return $namespaces[0]['attribs']['']['url'];
+        }
+
+        // Method 2: Try media:content namespace
+        $namespaces = $item->get_item_tags( 'http://search.yahoo.com/mrss/', 'content' );
+        if ( ! empty( $namespaces[0]['attribs']['']['url'] ) ) {
+            $type = isset( $namespaces[0]['attribs']['']['type'] ) ? $namespaces[0]['attribs']['']['type'] : '';
+            if ( empty( $type ) || strpos( $type, 'image/' ) === 0 ) {
+                return $namespaces[0]['attribs']['']['url'];
+            }
+        }
+
+        // Method 3: Try enclosure (media attachment)
+        $enclosure = $item->get_enclosure();
+        if ( $enclosure ) {
+            $link = $enclosure->get_link();
+            $type = $enclosure->get_type();
+
+            // Accept if it's an image type or if no type specified but URL looks like image
+            if ( ( $type && strpos( $type, 'image/' ) === 0 ) ||
+                 ( ! $type && preg_match( '/\.(jpg|jpeg|png|gif|webp)(\?|$)/i', $link ) ) ) {
+                return $link;
+            }
+        }
+
+        // Method 4: Try to get image from content
+        $content = $item->get_content();
+        if ( $content ) {
+            preg_match( '/<img[^>]+src=["\']([^"\']+)["\'][^>]*>/i', $content, $matches );
+            if ( ! empty( $matches[1] ) ) {
+                return $matches[1];
+            }
+        }
+
+        // Method 5: Try to get image from description (some feeds only have images here)
+        $description = $item->get_description();
+        if ( $description && $description !== $content ) {
+            preg_match( '/<img[^>]+src=["\']([^"\']+)["\'][^>]*>/i', $description, $matches );
+            if ( ! empty( $matches[1] ) ) {
+                return $matches[1];
+            }
+        }
+
+        // Method 6: Try Atom-specific summary with images
+        $summary = $item->get_item_tags( 'http://www.w3.org/2005/Atom', 'summary' );
+        if ( ! empty( $summary[0]['data'] ) ) {
+            preg_match( '/<img[^>]+src=["\']([^"\']+)["\'][^>]*>/i', $summary[0]['data'], $matches );
+            if ( ! empty( $matches[1] ) ) {
+                return $matches[1];
+            }
         }
 
         return false;
