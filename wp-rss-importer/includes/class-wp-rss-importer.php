@@ -43,6 +43,7 @@ class WP_RSS_Importer {
         require_once WP_RSS_IMPORTER_PLUGIN_DIR . 'includes/class-loader.php';
         require_once WP_RSS_IMPORTER_PLUGIN_DIR . 'includes/class-post-types.php';
         require_once WP_RSS_IMPORTER_PLUGIN_DIR . 'includes/class-admin.php';
+        require_once WP_RSS_IMPORTER_PLUGIN_DIR . 'includes/class-public.php';
         require_once WP_RSS_IMPORTER_PLUGIN_DIR . 'includes/class-feed-importer.php';
         require_once WP_RSS_IMPORTER_PLUGIN_DIR . 'includes/class-permalink-handler.php';
         require_once WP_RSS_IMPORTER_PLUGIN_DIR . 'includes/class-cron.php';
@@ -70,6 +71,10 @@ class WP_RSS_Importer {
      * Register cron hooks for feed importing and permalink handling
      */
     private function define_public_hooks() {
+        // Public-facing functionality (CSS, source attribution)
+        $public = new WP_RSS_Importer_Public( $this->plugin_name, $this->version );
+        $this->loader->add_action( 'wp_enqueue_scripts', $public, 'enqueue_styles' );
+
         $cron = new WP_RSS_Importer_Cron();
         $this->loader->add_action( 'wp_rss_importer_fetch_feeds', $cron, 'fetch_all_feeds' );
 
