@@ -4,14 +4,108 @@
  * Adds source attribution to RSS-imported posts
  */
 
-/* Add "From [Feed Name]:" prefix to RSS imported post titles */
-.rss-title::before {
-    content: "From " attr(data-source) ": ";
-    font-weight: normal;
-    color: inherit;
+/* Style the source prefix */
+.rss-source-prefix {
+    font-weight: normal !important;
+    opacity: 0.8;
 }
 
-/* Optional: Style the source prefix differently if desired */
-.rss-imported-post .rss-title::before {
+/* Override entry-title and link styles for source prefix */
+.entry-title .rss-source-prefix,
+.entry-title a .rss-source-prefix,
+h1 .rss-source-prefix,
+h2 .rss-source-prefix,
+h3 .rss-source-prefix {
+    font-weight: normal !important;
     opacity: 0.8;
+}
+
+/* Style the author attribution */
+.rss-author {
+    font-weight: normal !important;
+    font-size: 0.75em !important;
+    opacity: 0.7;
+    font-style: normal !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    line-height: 1 !important;
+}
+
+/* Style the external link icon to be smaller and raised */
+.rss-external-icon {
+    font-size: 0.6em !important;
+    vertical-align: super !important;
+    font-weight: normal !important;
+    line-height: 1 !important;
+    display: inline !important;
+}
+
+/* Override entry-title and link styles for author attribution */
+.entry-title .rss-author,
+.entry-title a .rss-author,
+.entry-header .rss-author,
+h1 .rss-author,
+h2 .rss-author,
+h3 .rss-author,
+a .rss-author {
+    font-weight: normal !important;
+    font-size: 0.75em !important;
+    opacity: 0.7;
+    font-style: normal !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    line-height: 1 !important;
+    color: inherit !important;
+    text-decoration: none !important;
+}
+
+/* Override entry-title and link styles for external link icon - ensure it's small in all contexts */
+.entry-title .rss-external-icon,
+.entry-title a .rss-external-icon,
+.entry-header .rss-external-icon,
+h1 .rss-external-icon,
+h2 .rss-external-icon,
+h3 .rss-external-icon,
+a .rss-external-icon {
+    font-size: 0.6em !important;
+    vertical-align: super !important;
+    font-weight: normal !important;
+    line-height: 1 !important;
+    display: inline !important;
+    color: inherit !important;
+    text-decoration: none !important;
+}
+
+.rss-title .rss-external-icon {
+    font-size: 0.6em !important;
+    font-family: 'Courier';
+    vertical-align: super !important;
+    font-weight: normal !important;
+    line-height: 1 !important;
+    display: inline !important;
+    color: inherit !important;
+    text-decoration: none !important;
+}
+
+/* Source attribution box */
+.rss-source-attribution {
+    margin: 1em 0;
+    padding: 0.75em 1em;
+    background: #f5f5f5;
+    border-left: 3px solid #0073aa;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.rss-source-attribution strong {
+    color: #333;
+}
+
+.rss-source-attribution a {
+    color: #0073aa;
+    text-decoration: none;
+}
+
+.rss-source-attribution a:hover {
+    text-decoration: underline;
 }

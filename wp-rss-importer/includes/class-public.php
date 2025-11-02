@@ -29,6 +29,7 @@ class WP_RSS_Importer_Public {
         // Add hooks for source attribution
         add_filter( 'post_class', array( $this, 'add_rss_import_class' ), 10, 3 );
         add_filter( 'the_title', array( $this, 'add_source_data_attribute' ), 10, 2 );
+        add_filter( 'the_content', array( $this, 'add_source_attribution' ), 10, 1 );
     }
 
     /**
@@ -99,11 +100,85 @@ class WP_RSS_Importer_Public {
         if ( $source_id ) {
             $source_post = get_post( $source_id );
             if ( $source_post ) {
-                $source_name = esc_attr( $source_post->post_title );
-                return '<span class="rss-title" data-source="' . $source_name . '">' . $title . '</span>';
+                $source_name = esc_html( $source_post->post_title );
+                $source_author = get_post_meta( $post_id, '_source_author', true );
+
+                // Build the title with source prefix
+                $modified_title = '<span class="rss-title" data-source="' . esc_attr( $source_name ) . '">';
+                $modified_title .= '<span class="rss-source-prefix">' . $source_name . ':</span> ';
+                $modified_title .= $title;
+
+                // Add author if exists
+                if ( ! empty( $source_author ) ) {
+                    $modified_title .= ' <span class="rss-author">by ' . esc_html( $source_author ) . '</span>';
+                }
+
+                // Add external link icon wrapped in span for styling
+                $modified_title .= ' <span class="rss-external-icon">&#8599;</span>';
+                $modified_title .= '</span>';
+
+                return $modified_title;
             }
         }
 
         return $title;
+    }
+
+    /**
+     * Add source attribution box to RSS imported posts
+     *
+     * @param string $content Post content
+     * @return string Modified content with attribution
+     */
+    public function add_source_attribution( $content ) {
+        // Skip in admin area
+        if ( is_admin() ) {
+            return $content;
+        }
+
+        // Only show on singular post views
+        if ( ! is_singular() ) {
+            return $content;
+        }
+
+        // Get the current post ID
+        $post_id = get_the_ID();
+        if ( ! $post_id ) {
+            return $content;
+        }
+
+        // Check if this is an RSS imported post
+        $source_id = get_post_meta( $post_id, '_source_id', true );
+        if ( ! $source_id ) {
+            return $content;
+        }
+
+        // Get source information
+        $source_post = get_post( $source_id );
+        if ( ! $source_post ) {
+            return $content;
+        }
+
+        $source_name = esc_html( $source_post->post_title );
+        $source_author = get_post_meta( $post_id, '_source_author', true );
+        $source_permalink = get_post_meta( $post_id, '_source_permalink', true );
+
+        // Build attribution HTML
+        $attribution = '<div class="rss-source-attribution">';
+
+        if ( $source_author ) {
+            $attribution .= '<strong>Author:</strong> ' . esc_html( $source_author ) . ' | ';
+        }
+
+        $attribution .= '<strong>Source:</strong> ' . $source_name;
+
+        if ( $source_permalink ) {
+            $attribution .= ' | <a href="' . esc_url( $source_permalink ) . '" target="_blank" rel="noopener noreferrer">View Original Article &#8599;</a>';
+        }
+
+        $attribution .= '</div>';
+
+        // Append attribution to content
+        return $content . $attribution;
     }
 }
