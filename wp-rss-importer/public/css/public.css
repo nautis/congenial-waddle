@@ -4,16 +4,9 @@
  * Adds source attribution to RSS-imported posts
  */
 
-/* Add "By [Author] from [Feed Name]:" prefix to RSS imported post titles */
-.rss-title[data-author]::before {
-    content: "By " attr(data-author) " from " attr(data-source) ": ";
-    font-weight: normal;
-    color: inherit;
-}
-
-/* If no author, just show "From [Feed Name]:" */
-.rss-title:not([data-author])::before {
-    content: "From " attr(data-source) ": ";
+/* Add "[Feed Name]:" prefix to RSS imported post titles */
+.rss-title::before {
+    content: attr(data-source) ": ";
     font-weight: normal;
     color: inherit;
 }
@@ -23,8 +16,15 @@
     opacity: 0.8;
 }
 
-/* Add external link icon after RSS imported post titles */
-.rss-title::after {
+/* Add "by [Author]" suffix and external link icon after title if author exists */
+.rss-title[data-author]::after {
+    content: " by " attr(data-author) " \2197";
+    font-weight: normal;
+    color: inherit;
+}
+
+/* Add external link icon after RSS imported post titles (no author) */
+.rss-title:not([data-author])::after {
     content: " \2197";
     font-size: 0.8em;
     opacity: 0.6;
