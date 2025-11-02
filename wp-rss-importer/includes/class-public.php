@@ -113,8 +113,8 @@ class WP_RSS_Importer_Public {
                     $modified_title .= ' <span class="rss-author">by ' . esc_html( $source_author ) . '</span>';
                 }
 
-                // Add external link icon
-                $modified_title .= ' &#8599;';
+                // Add external link icon wrapped in span for styling
+                $modified_title .= ' <span class="rss-external-icon">&#8599;</span>';
                 $modified_title .= '</span>';
 
                 return $modified_title;

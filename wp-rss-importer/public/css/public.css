@@ -31,6 +31,15 @@ h3 .rss-source-prefix {
     line-height: 1 !important;
 }
 
+/* Style the external link icon to be smaller and raised */
+.rss-external-icon {
+    font-size: 0.6em !important;
+    vertical-align: super !important;
+    font-weight: normal !important;
+    line-height: 1 !important;
+    display: inline !important;
+}
+
 /* Override entry-title and link styles for author attribution */
 .entry-title .rss-author,
 .entry-title a .rss-author,
@@ -46,6 +55,24 @@ a .rss-author {
     text-transform: none !important;
     letter-spacing: normal !important;
     line-height: 1 !important;
+    color: inherit !important;
+    text-decoration: none !important;
+}
+
+/* Override entry-title and link styles for external link icon - ensure it's small in all contexts */
+.entry-title .rss-external-icon,
+.entry-title a .rss-external-icon,
+.entry-header .rss-external-icon,
+h1 .rss-external-icon,
+h2 .rss-external-icon,
+h3 .rss-external-icon,
+a .rss-external-icon,
+.rss-title .rss-external-icon {
+    font-size: 0.6em !important;
+    vertical-align: super !important;
+    font-weight: normal !important;
+    line-height: 1 !important;
+    display: inline !important;
     color: inherit !important;
     text-decoration: none !important;
 }
