@@ -66,9 +66,19 @@ a .rss-author {
 h1 .rss-external-icon,
 h2 .rss-external-icon,
 h3 .rss-external-icon,
-a .rss-external-icon,
+a .rss-external-icon {
+    font-size: 0.6em !important;
+    vertical-align: super !important;
+    font-weight: normal !important;
+    line-height: 1 !important;
+    display: inline !important;
+    color: inherit !important;
+    text-decoration: none !important;
+}
+
 .rss-title .rss-external-icon {
     font-size: 0.6em !important;
+    font-family: 'Courier';
     vertical-align: super !important;
     font-weight: normal !important;
     line-height: 1 !important;
