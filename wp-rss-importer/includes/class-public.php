@@ -100,16 +100,24 @@ class WP_RSS_Importer_Public {
         if ( $source_id ) {
             $source_post = get_post( $source_id );
             if ( $source_post ) {
-                $source_name = esc_attr( $source_post->post_title );
-                $source_author = esc_attr( get_post_meta( $post_id, '_source_author', true ) );
+                $source_name = esc_html( $source_post->post_title );
+                $source_author = get_post_meta( $post_id, '_source_author', true );
 
-                // Build data attributes
-                $data_attrs = 'data-source="' . $source_name . '"';
+                // Build the title with source prefix
+                $modified_title = '<span class="rss-title" data-source="' . esc_attr( $source_name ) . '">';
+                $modified_title .= '<span class="rss-source-prefix">' . $source_name . ':</span> ';
+                $modified_title .= $title;
+
+                // Add author if exists
                 if ( ! empty( $source_author ) ) {
-                    $data_attrs .= ' data-author="' . $source_author . '"';
+                    $modified_title .= ' <span class="rss-author">by ' . esc_html( $source_author ) . '</span>';
                 }
 
-                return '<span class="rss-title" ' . $data_attrs . '>' . $title . '</span>';
+                // Add external link icon
+                $modified_title .= ' &#8599;';
+                $modified_title .= '</span>';
+
+                return $modified_title;
             }
         }
 
