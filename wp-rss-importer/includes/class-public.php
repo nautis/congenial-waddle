@@ -84,8 +84,13 @@ class WP_RSS_Importer_Public {
      * @return string Modified title
      */
     public function add_source_data_attribute( $title, $post_id ) {
-        // Only apply in the loop and for the main query
-        if ( ! in_the_loop() || ! is_main_query() ) {
+        // Skip if we don't have a valid post ID
+        if ( ! $post_id ) {
+            return $title;
+        }
+
+        // Skip in admin area
+        if ( is_admin() ) {
             return $title;
         }
 
