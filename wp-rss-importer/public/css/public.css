@@ -1,0 +1,17 @@
+/**
+ * Public Styles for WP RSS Importer
+ *
+ * Adds source attribution to RSS-imported posts
+ */
+
+/* Add "From [Feed Name]:" prefix to RSS imported post titles */
+.rss-title::before {
+    content: "From " attr(data-source) ": ";
+    font-weight: normal;
+    color: inherit;
+}
+
+/* Optional: Style the source prefix differently if desired */
+.rss-imported-post .rss-title::before {
+    opacity: 0.8;
+}

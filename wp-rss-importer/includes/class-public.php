@@ -25,6 +25,10 @@ class WP_RSS_Importer_Public {
     public function __construct( $plugin_name, $version ) {
         $this->plugin_name = $plugin_name;
         $this->version = $version;
+
+        // Add hooks for source attribution
+        add_filter( 'post_class', array( $this, 'add_rss_import_class' ), 10, 3 );
+        add_filter( 'the_title', array( $this, 'add_source_data_attribute' ), 10, 2 );
     }
 
     /**
@@ -45,5 +49,56 @@ class WP_RSS_Importer_Public {
      */
     public function enqueue_scripts() {
         // Add any public scripts here if needed in the future
+    }
+
+    /**
+     * Add RSS import class and data attribute to posts
+     *
+     * @param array $classes Post classes
+     * @param string $class Additional classes
+     * @param int $post_id Post ID
+     * @return array Modified classes
+     */
+    public function add_rss_import_class( $classes, $class, $post_id ) {
+        $source_id = get_post_meta( $post_id, '_source_id', true );
+
+        if ( $source_id ) {
+            $classes[] = 'rss-imported-post';
+
+            // Get the feed source name
+            $source_post = get_post( $source_id );
+            if ( $source_post ) {
+                $source_name = sanitize_html_class( $source_post->post_title );
+                $classes[] = 'rss-source-' . $source_name;
+            }
+        }
+
+        return $classes;
+    }
+
+    /**
+     * Add data attribute with source name to post titles
+     *
+     * @param string $title Post title
+     * @param int $post_id Post ID
+     * @return string Modified title
+     */
+    public function add_source_data_attribute( $title, $post_id ) {
+        // Only apply in the loop and for the main query
+        if ( ! in_the_loop() || ! is_main_query() ) {
+            return $title;
+        }
+
+        $source_id = get_post_meta( $post_id, '_source_id', true );
+
+        if ( $source_id ) {
+            $source_post = get_post( $source_id );
+            if ( $source_post ) {
+                $source_name = esc_attr( $source_post->post_title );
+                return '<span class="rss-title" data-source="' . $source_name . '">' . $title . '</span>';
+            }
+        }
+
+        return $title;
     }
 }
