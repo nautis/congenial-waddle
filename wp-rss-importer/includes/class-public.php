@@ -101,7 +101,15 @@ class WP_RSS_Importer_Public {
             $source_post = get_post( $source_id );
             if ( $source_post ) {
                 $source_name = esc_attr( $source_post->post_title );
-                return '<span class="rss-title" data-source="' . $source_name . '">' . $title . '</span>';
+                $source_author = esc_attr( get_post_meta( $post_id, '_source_author', true ) );
+
+                // Build data attributes
+                $data_attrs = 'data-source="' . $source_name . '"';
+                if ( ! empty( $source_author ) ) {
+                    $data_attrs .= ' data-author="' . $source_author . '"';
+                }
+
+                return '<span class="rss-title" ' . $data_attrs . '>' . $title . '</span>';
             }
         }
 
