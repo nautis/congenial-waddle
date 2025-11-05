@@ -305,12 +305,15 @@ class WP_RSS_Importer_Feed_Importer {
             return false;
         }
 
-        // Get file info
+        // Get file info and remove query parameters BEFORE sanitizing
         $file_info = pathinfo( $image_url );
-        $file_name = sanitize_file_name( $file_info['basename'] );
+        $file_name = $file_info['basename'];
 
-        // Remove query parameters from filename (e.g., ?v=123)
+        // Remove query parameters from filename (e.g., ?v=123) BEFORE sanitizing
         $file_name = preg_replace( '/\?.*$/', '', $file_name );
+
+        // Now sanitize the cleaned filename
+        $file_name = sanitize_file_name( $file_name );
 
         // Use WordPress's file type checking (more reliable than mime_content_type)
         $wp_filetype = wp_check_filetype( $file_name, null );
