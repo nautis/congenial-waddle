@@ -31,7 +31,7 @@ class WP_RSS_Importer_NYT_API_Importer {
         }
 
         if ( empty( $search_query ) ) {
-            $search_query = 'watches'; // Default search
+            $search_query = 'timepiece OR horology OR "luxury watches" OR "mechanical watch"'; // Default search
         }
 
         // Build API request URL
@@ -256,8 +256,15 @@ class WP_RSS_Importer_NYT_API_Importer {
         // Look for the largest/best quality image
         foreach ( $article['multimedia'] as $media ) {
             if ( isset( $media['url'] ) && ! empty( $media['url'] ) ) {
-                // Construct full URL - NY Times multimedia URLs are relative
-                $image_url = 'https://www.nytimes.com/' . ltrim( $media['url'], '/' );
+                $url = $media['url'];
+
+                // Check if URL is already absolute (starts with http:// or https://)
+                if ( strpos( $url, 'http://' ) === 0 || strpos( $url, 'https://' ) === 0 ) {
+                    return $url;
+                }
+
+                // Otherwise, construct full URL - NY Times multimedia URLs may be relative
+                $image_url = 'https://www.nytimes.com/' . ltrim( $url, '/' );
                 return $image_url;
             }
         }
