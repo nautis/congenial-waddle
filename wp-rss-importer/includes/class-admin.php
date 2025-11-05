@@ -137,7 +137,7 @@ class WP_RSS_Importer_Admin {
             <tr>
                 <th><label for="feed_url"><?php _e( 'Feed URL', 'wp-rss-importer' ); ?></label></th>
                 <td>
-                    <input type="url" id="feed_url" name="feed_url" value="<?php echo esc_attr( $feed_url ); ?>" class="large-text" required>
+                    <input type="url" id="feed_url" name="feed_url" value="<?php echo esc_attr( $feed_url ); ?>" class="large-text" <?php echo ( $feed_type !== 'nytimes_api' ) ? 'required' : ''; ?>>
                     <p class="description" id="feed_url_description_rss" style="<?php echo ( $feed_type !== 'rss' ) ? 'display:none;' : ''; ?>">
                         <?php _e( 'Enter the RSS or Atom feed URL (e.g., https://example.com/feed)', 'wp-rss-importer' ); ?>
                     </p>
@@ -204,6 +204,9 @@ class WP_RSS_Importer_Admin {
                     }
                 }
             });
+
+            // Trigger change event on page load to set initial state
+            $('#feed_type').trigger('change');
         });
         </script>
         <?php
