@@ -295,12 +295,22 @@ class WP_RSS_Importer_Feed_Importer {
         $temp_file = download_url( $image_url );
 
         if ( is_wp_error( $temp_file ) ) {
+            // Log the download error for debugging
+            error_log( sprintf(
+                'WP RSS Importer: Failed to download image %s for post %d. Error: %s',
+                $image_url,
+                $post_id,
+                $temp_file->get_error_message()
+            ) );
             return false;
         }
 
         // Get file info
         $file_info = pathinfo( $image_url );
         $file_name = sanitize_file_name( $file_info['basename'] );
+
+        // Remove query parameters from filename (e.g., ?v=123)
+        $file_name = preg_replace( '/\?.*$/', '', $file_name );
 
         // Prepare file array
         $file = array(
@@ -316,6 +326,13 @@ class WP_RSS_Importer_Feed_Importer {
 
         if ( is_wp_error( $attachment_id ) ) {
             @unlink( $temp_file );
+            // Log the sideload error for debugging
+            error_log( sprintf(
+                'WP RSS Importer: Failed to sideload image %s for post %d. Error: %s',
+                $image_url,
+                $post_id,
+                $attachment_id->get_error_message()
+            ) );
             return false;
         }
 
