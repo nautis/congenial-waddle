@@ -159,8 +159,15 @@ class WP_RSS_Importer_Admin {
             <tr class="nytimes-api-field" style="<?php echo ( $feed_type !== 'nytimes_api' ) ? 'display:none;' : ''; ?>">
                 <th><label for="nyt_search_query"><?php _e( 'Search Query', 'wp-rss-importer' ); ?></label></th>
                 <td>
-                    <input type="text" id="nyt_search_query" name="nyt_search_query" value="<?php echo esc_attr( get_post_meta( $post->ID, '_nyt_search_query', true ) ); ?>" class="large-text" placeholder='timepiece OR horology OR "luxury watches"'>
-                    <p class="description"><?php _e( 'Search query for NY Times articles. Use specific terms like "timepiece", "horology", or combine with OR. Leave empty for default watch-related search.', 'wp-rss-importer' ); ?></p>
+                    <input type="text" id="nyt_search_query" name="nyt_search_query" value="<?php echo esc_attr( get_post_meta( $post->ID, '_nyt_search_query', true ) ); ?>" class="large-text" placeholder='watch OR watches'>
+                    <p class="description"><?php _e( 'Search query for NY Times articles. Use OR to combine terms. Leave empty for default: "watch OR watches"', 'wp-rss-importer' ); ?></p>
+                </td>
+            </tr>
+            <tr class="nytimes-api-field" style="<?php echo ( $feed_type !== 'nytimes_api' ) ? 'display:none;' : ''; ?>">
+                <th><label for="nyt_section"><?php _e( 'Section Filter', 'wp-rss-importer' ); ?></label></th>
+                <td>
+                    <input type="text" id="nyt_section" name="nyt_section" value="<?php echo esc_attr( get_post_meta( $post->ID, '_nyt_section', true ) ); ?>" class="regular-text" placeholder="Style">
+                    <p class="description"><?php _e( 'Filter by section (e.g., "Style", "Fashion & Style", "Arts"). Leave empty to search all sections.', 'wp-rss-importer' ); ?></p>
                 </td>
             </tr>
         </table>
@@ -316,6 +323,11 @@ class WP_RSS_Importer_Admin {
         // Save NY Times search query
         if ( isset( $_POST['nyt_search_query'] ) ) {
             update_post_meta( $post_id, '_nyt_search_query', sanitize_text_field( $_POST['nyt_search_query'] ) );
+        }
+
+        // Save NY Times section filter
+        if ( isset( $_POST['nyt_section'] ) ) {
+            update_post_meta( $post_id, '_nyt_section', sanitize_text_field( $_POST['nyt_section'] ) );
         }
     }
 

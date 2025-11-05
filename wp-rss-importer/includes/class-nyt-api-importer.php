@@ -23,6 +23,7 @@ class WP_RSS_Importer_NYT_API_Importer {
     public function import_feed( $source_id ) {
         $api_key = get_post_meta( $source_id, '_nyt_api_key', true );
         $search_query = get_post_meta( $source_id, '_nyt_search_query', true );
+        $section = get_post_meta( $source_id, '_nyt_section', true );
         $limit = get_post_meta( $source_id, '_feed_limit', true );
         $keyword_filter = get_post_meta( $source_id, '_keyword_filter', true );
 
@@ -31,16 +32,23 @@ class WP_RSS_Importer_NYT_API_Importer {
         }
 
         if ( empty( $search_query ) ) {
-            $search_query = 'timepiece OR horology OR "luxury watches" OR "mechanical watch"'; // Default search
+            $search_query = 'watch OR watches'; // Default search
         }
 
-        // Build API request URL
-        $api_url = add_query_arg( array(
-            'q'       => urlencode( $search_query ),
+        // Build API request URL parameters
+        $api_params = array(
+            'q'       => $search_query,
             'api-key' => $api_key,
             'sort'    => 'newest',
             'page'    => 0,
-        ), self::API_BASE_URL );
+        );
+
+        // Add section filter if specified
+        if ( ! empty( $section ) ) {
+            $api_params['fq'] = 'section_name:"' . $section . '"';
+        }
+
+        $api_url = add_query_arg( $api_params, self::API_BASE_URL );
 
         $imported_count = 0;
         $max_items = ! empty( $limit ) && is_numeric( $limit ) ? intval( $limit ) : 10;
