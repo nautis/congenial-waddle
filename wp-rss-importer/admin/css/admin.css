@@ -1,0 +1,44 @@
+/**
+ * Admin Styles for WP RSS Importer
+ */
+
+.feed-status {
+    padding: 10px;
+}
+
+.feed-status p {
+    margin: 10px 0;
+}
+
+.feed-status .error-message {
+    padding: 10px;
+    background: #fff3f3;
+    border-left: 4px solid #dc3232;
+}
+
+/* Feed sources list table */
+.widefat .feed-item-count {
+    font-weight: bold;
+    color: #2271b1;
+}
+
+/* Meta box styling */
+.form-table th {
+    width: 200px;
+}
+
+/* Settings page */
+.wrap h1 {
+    margin-bottom: 20px;
+}
+
+.wrap .form-table {
+    margin-top: 20px;
+}
+
+/* Manual fetch page */
+.wp-list-table .button-small {
+    padding: 2px 8px;
+    font-size: 12px;
+    height: auto;
+}
