@@ -129,6 +129,7 @@ class WP_RSS_Importer_Admin {
                     <select id="feed_type" name="feed_type" class="regular-text">
                         <option value="rss" <?php selected( $feed_type, 'rss' ); ?>><?php _e( 'RSS/Atom Feed', 'wp-rss-importer' ); ?></option>
                         <option value="wordpress_api" <?php selected( $feed_type, 'wordpress_api' ); ?>><?php _e( 'WordPress REST API', 'wp-rss-importer' ); ?></option>
+                        <option value="nytimes_api" <?php selected( $feed_type, 'nytimes_api' ); ?>><?php _e( 'NY Times API', 'wp-rss-importer' ); ?></option>
                     </select>
                     <p class="description"><?php _e( 'Select the type of feed source', 'wp-rss-importer' ); ?></p>
                 </td>
@@ -137,12 +138,29 @@ class WP_RSS_Importer_Admin {
                 <th><label for="feed_url"><?php _e( 'Feed URL', 'wp-rss-importer' ); ?></label></th>
                 <td>
                     <input type="url" id="feed_url" name="feed_url" value="<?php echo esc_attr( $feed_url ); ?>" class="large-text" required>
-                    <p class="description" id="feed_url_description_rss" style="<?php echo ( $feed_type === 'wordpress_api' ) ? 'display:none;' : ''; ?>">
+                    <p class="description" id="feed_url_description_rss" style="<?php echo ( $feed_type !== 'rss' ) ? 'display:none;' : ''; ?>">
                         <?php _e( 'Enter the RSS or Atom feed URL (e.g., https://example.com/feed)', 'wp-rss-importer' ); ?>
                     </p>
-                    <p class="description" id="feed_url_description_wp_api" style="<?php echo ( $feed_type === 'rss' ) ? 'display:none;' : ''; ?>">
+                    <p class="description" id="feed_url_description_wp_api" style="<?php echo ( $feed_type !== 'wordpress_api' ) ? 'display:none;' : ''; ?>">
                         <?php _e( 'Enter the WordPress site URL (e.g., https://example.com) - the plugin will automatically use /wp-json/wp/v2/posts', 'wp-rss-importer' ); ?>
                     </p>
+                    <p class="description" id="feed_url_description_nyt_api" style="<?php echo ( $feed_type !== 'nytimes_api' ) ? 'display:none;' : ''; ?>">
+                        <?php _e( 'Not used for NY Times API (uses search query below)', 'wp-rss-importer' ); ?>
+                    </p>
+                </td>
+            </tr>
+            <tr class="nytimes-api-field" style="<?php echo ( $feed_type !== 'nytimes_api' ) ? 'display:none;' : ''; ?>">
+                <th><label for="nyt_api_key"><?php _e( 'NY Times API Key', 'wp-rss-importer' ); ?></label></th>
+                <td>
+                    <input type="text" id="nyt_api_key" name="nyt_api_key" value="<?php echo esc_attr( get_post_meta( $post->ID, '_nyt_api_key', true ) ); ?>" class="large-text">
+                    <p class="description"><?php _e( 'Get your free API key from https://developer.nytimes.com', 'wp-rss-importer' ); ?></p>
+                </td>
+            </tr>
+            <tr class="nytimes-api-field" style="<?php echo ( $feed_type !== 'nytimes_api' ) ? 'display:none;' : ''; ?>">
+                <th><label for="nyt_search_query"><?php _e( 'Search Query', 'wp-rss-importer' ); ?></label></th>
+                <td>
+                    <input type="text" id="nyt_search_query" name="nyt_search_query" value="<?php echo esc_attr( get_post_meta( $post->ID, '_nyt_search_query', true ) ); ?>" class="large-text" placeholder="watches">
+                    <p class="description"><?php _e( 'Search term for NY Times articles (e.g., "watches")', 'wp-rss-importer' ); ?></p>
                 </td>
             </tr>
         </table>
@@ -150,12 +168,26 @@ class WP_RSS_Importer_Admin {
         jQuery(document).ready(function($) {
             $('#feed_type').on('change', function() {
                 var feedType = $(this).val();
-                if (feedType === 'wordpress_api') {
-                    $('#feed_url_description_rss').hide();
-                    $('#feed_url_description_wp_api').show();
+
+                // Hide all descriptions
+                $('#feed_url_description_rss').hide();
+                $('#feed_url_description_wp_api').hide();
+                $('#feed_url_description_nyt_api').hide();
+
+                // Show/hide NY Times API fields
+                if (feedType === 'nytimes_api') {
+                    $('.nytimes-api-field').show();
+                    $('#feed_url_description_nyt_api').show();
+                    $('#feed_url').prop('required', false);
                 } else {
-                    $('#feed_url_description_rss').show();
-                    $('#feed_url_description_wp_api').hide();
+                    $('.nytimes-api-field').hide();
+                    $('#feed_url').prop('required', true);
+
+                    if (feedType === 'wordpress_api') {
+                        $('#feed_url_description_wp_api').show();
+                    } else {
+                        $('#feed_url_description_rss').show();
+                    }
                 }
             });
         });
@@ -256,7 +288,7 @@ class WP_RSS_Importer_Admin {
         // Save feed type
         if ( isset( $_POST['feed_type'] ) ) {
             $feed_type = sanitize_text_field( $_POST['feed_type'] );
-            if ( in_array( $feed_type, array( 'rss', 'wordpress_api' ) ) ) {
+            if ( in_array( $feed_type, array( 'rss', 'wordpress_api', 'nytimes_api' ) ) ) {
                 update_post_meta( $post_id, '_feed_type', $feed_type );
             }
         }
@@ -274,6 +306,16 @@ class WP_RSS_Importer_Admin {
         // Save keyword filter
         if ( isset( $_POST['keyword_filter'] ) ) {
             update_post_meta( $post_id, '_keyword_filter', sanitize_text_field( $_POST['keyword_filter'] ) );
+        }
+
+        // Save NY Times API key
+        if ( isset( $_POST['nyt_api_key'] ) ) {
+            update_post_meta( $post_id, '_nyt_api_key', sanitize_text_field( $_POST['nyt_api_key'] ) );
+        }
+
+        // Save NY Times search query
+        if ( isset( $_POST['nyt_search_query'] ) ) {
+            update_post_meta( $post_id, '_nyt_search_query', sanitize_text_field( $_POST['nyt_search_query'] ) );
         }
     }
 

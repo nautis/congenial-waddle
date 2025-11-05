@@ -1,93 +1,112 @@
 <?php
 /**
- * Feed Importer Class - Handles RSS/Atom feed parsing and import
+ * NY Times API Importer Class - Handles importing from NY Times Article Search API
  */
 
 if ( ! defined( 'WPINC' ) ) {
     die;
 }
 
-class WP_RSS_Importer_Feed_Importer {
+class WP_RSS_Importer_NYT_API_Importer {
 
     /**
-     * Fetch and import a single feed source
+     * NY Times API base URL
+     */
+    const API_BASE_URL = 'https://api.nytimes.com/svc/search/v2/articlesearch.json';
+
+    /**
+     * Fetch and import from NY Times API
      *
      * @param int $source_id The feed source post ID
      * @return bool|WP_Error
      */
     public function import_feed( $source_id ) {
-        // Check feed type and route to appropriate importer
-        $feed_type = get_post_meta( $source_id, '_feed_type', true );
-
-        // Default to RSS for backward compatibility
-        if ( empty( $feed_type ) ) {
-            $feed_type = 'rss';
-        }
-
-        // Route to appropriate importer
-        if ( $feed_type === 'wordpress_api' ) {
-            require_once WP_RSS_IMPORTER_PLUGIN_DIR . 'includes/class-wp-api-importer.php';
-            $importer = new WP_RSS_Importer_WP_API_Importer();
-            return $importer->import_feed( $source_id );
-        } elseif ( $feed_type === 'nytimes_api' ) {
-            require_once WP_RSS_IMPORTER_PLUGIN_DIR . 'includes/class-nyt-api-importer.php';
-            $importer = new WP_RSS_Importer_NYT_API_Importer();
-            return $importer->import_feed( $source_id );
-        }
-
-        // Default: RSS/Atom import
-        return $this->import_rss_feed( $source_id );
-    }
-
-    /**
-     * Import RSS/Atom feed
-     *
-     * @param int $source_id The feed source post ID
-     * @return bool|WP_Error
-     */
-    private function import_rss_feed( $source_id ) {
-        $feed_url = get_post_meta( $source_id, '_feed_url', true );
+        $api_key = get_post_meta( $source_id, '_nyt_api_key', true );
+        $search_query = get_post_meta( $source_id, '_nyt_search_query', true );
         $limit = get_post_meta( $source_id, '_feed_limit', true );
         $keyword_filter = get_post_meta( $source_id, '_keyword_filter', true );
 
-        if ( empty( $feed_url ) ) {
-            return new WP_Error( 'no_feed_url', __( 'No feed URL specified.', 'wp-rss-importer' ) );
+        if ( empty( $api_key ) ) {
+            return new WP_Error( 'no_api_key', __( 'No NY Times API key specified.', 'wp-rss-importer' ) );
         }
 
-        // Fetch the feed
-        $feed = fetch_feed( $feed_url );
-
-        if ( is_wp_error( $feed ) ) {
-            update_post_meta( $source_id, '_last_error', $feed->get_error_message() );
-            update_post_meta( $source_id, '_last_fetch', current_time( 'mysql' ) );
-            return $feed;
+        if ( empty( $search_query ) ) {
+            $search_query = 'watches'; // Default search
         }
 
-        // Get feed items
-        $max_items = ! empty( $limit ) && is_numeric( $limit ) ? intval( $limit ) : 0;
-        $items = $feed->get_items( 0, $max_items );
+        // Build API request URL
+        $api_url = add_query_arg( array(
+            'q'       => urlencode( $search_query ),
+            'api-key' => $api_key,
+            'sort'    => 'newest',
+            'page'    => 0,
+        ), self::API_BASE_URL );
 
         $imported_count = 0;
+        $max_items = ! empty( $limit ) && is_numeric( $limit ) ? intval( $limit ) : 10;
 
-        foreach ( $items as $item ) {
+        // Fetch articles
+        $response = wp_remote_get( $api_url, array(
+            'timeout' => 30,
+        ) );
+
+        if ( is_wp_error( $response ) ) {
+            update_post_meta( $source_id, '_last_error', $response->get_error_message() );
+            update_post_meta( $source_id, '_last_fetch', current_time( 'mysql' ) );
+            return $response;
+        }
+
+        $response_code = wp_remote_retrieve_response_code( $response );
+
+        if ( $response_code !== 200 ) {
+            $error_message = sprintf(
+                __( 'NY Times API returned status code %d. Please verify your API key is valid.', 'wp-rss-importer' ),
+                $response_code
+            );
+            update_post_meta( $source_id, '_last_error', $error_message );
+            update_post_meta( $source_id, '_last_fetch', current_time( 'mysql' ) );
+            return new WP_Error( 'api_error', $error_message );
+        }
+
+        $body = wp_remote_retrieve_body( $response );
+        $data = json_decode( $body, true );
+
+        if ( ! isset( $data['response']['docs'] ) || ! is_array( $data['response']['docs'] ) ) {
+            $error_message = __( 'Invalid response from NY Times API.', 'wp-rss-importer' );
+            update_post_meta( $source_id, '_last_error', $error_message );
+            update_post_meta( $source_id, '_last_fetch', current_time( 'mysql' ) );
+            return new WP_Error( 'api_error', $error_message );
+        }
+
+        $articles = $data['response']['docs'];
+
+        foreach ( $articles as $article ) {
+            // Check if we've reached the limit
+            if ( $imported_count >= $max_items ) {
+                break;
+            }
+
             // Apply keyword filter if set
             if ( ! empty( $keyword_filter ) ) {
-                $title = $item->get_title();
-                $content = $item->get_content();
+                $headline = isset( $article['headline']['main'] ) ? $article['headline']['main'] : '';
+                $abstract = isset( $article['abstract'] ) ? $article['abstract'] : '';
+                $snippet = isset( $article['snippet'] ) ? $article['snippet'] : '';
 
-                if ( stripos( $title, $keyword_filter ) === false &&
-                     stripos( $content, $keyword_filter ) === false ) {
+                if ( stripos( $headline, $keyword_filter ) === false &&
+                     stripos( $abstract, $keyword_filter ) === false &&
+                     stripos( $snippet, $keyword_filter ) === false ) {
                     continue;
                 }
             }
 
             // Check if item already exists
-            if ( $this->item_exists( $item->get_permalink() ) ) {
+            $web_url = isset( $article['web_url'] ) ? $article['web_url'] : '';
+            if ( empty( $web_url ) || $this->item_exists( $web_url ) ) {
                 continue;
             }
 
             // Import the item
-            if ( $this->create_feed_item( $item, $source_id ) ) {
+            if ( $this->create_feed_item( $article, $source_id ) ) {
                 $imported_count++;
             }
         }
@@ -126,20 +145,50 @@ class WP_RSS_Importer_Feed_Importer {
     }
 
     /**
-     * Create a feed item post
+     * Create a feed item post from NY Times API data
      *
-     * @param SimplePie_Item $item The feed item
+     * @param array $article The article data from NY Times API
      * @param int $source_id The feed source ID
      * @return int|bool Post ID on success, false on failure
      */
-    private function create_feed_item( $item, $source_id ) {
-        $title = $item->get_title();
-        $content = $item->get_content();
-        $excerpt = $this->get_excerpt( $content, 250 );
-        $permalink = $item->get_permalink();
-        $author = $item->get_author();
-        $author_name = $author ? $author->get_name() : '';
-        $date = $item->get_date( 'Y-m-d H:i:s' );
+    private function create_feed_item( $article, $source_id ) {
+        // Extract article data
+        $headline = isset( $article['headline']['main'] ) ? $article['headline']['main'] : '';
+        $abstract = isset( $article['abstract'] ) ? $article['abstract'] : '';
+        $lead_paragraph = isset( $article['lead_paragraph'] ) ? $article['lead_paragraph'] : '';
+        $snippet = isset( $article['snippet'] ) ? $article['snippet'] : '';
+        $web_url = isset( $article['web_url'] ) ? $article['web_url'] : '';
+        $pub_date = isset( $article['pub_date'] ) ? $article['pub_date'] : current_time( 'mysql' );
+
+        // Generate content from available text
+        $content = '';
+        if ( ! empty( $lead_paragraph ) ) {
+            $content = '<p>' . $lead_paragraph . '</p>';
+        } elseif ( ! empty( $abstract ) ) {
+            $content = '<p>' . $abstract . '</p>';
+        } elseif ( ! empty( $snippet ) ) {
+            $content = '<p>' . $snippet . '</p>';
+        }
+
+        // Use abstract or snippet for excerpt
+        $excerpt = ! empty( $abstract ) ? $abstract : $snippet;
+        $excerpt = $this->get_excerpt( $excerpt, 250 );
+
+        // Get author from byline
+        $author_name = '';
+        if ( isset( $article['byline']['original'] ) ) {
+            $author_name = $article['byline']['original'];
+        } elseif ( isset( $article['byline']['person'][0]['firstname'] ) && isset( $article['byline']['person'][0]['lastname'] ) ) {
+            $author_name = $article['byline']['person'][0]['firstname'] . ' ' . $article['byline']['person'][0]['lastname'];
+        }
+
+        // Convert pub_date to WordPress format
+        try {
+            $date_obj = new DateTime( $pub_date );
+            $wp_date = $date_obj->format( 'Y-m-d H:i:s' );
+        } catch ( Exception $e ) {
+            $wp_date = current_time( 'mysql' );
+        }
 
         // Get or create the "News" category
         $news_category = get_term_by( 'slug', 'news', 'category' );
@@ -154,14 +203,14 @@ class WP_RSS_Importer_Feed_Importer {
             $news_category_id = $news_category->term_id;
         }
 
-        // Create the post as regular WordPress post
+        // Create the post
         $post_data = array(
             'post_type'     => 'post',
-            'post_title'    => sanitize_text_field( $title ),
+            'post_title'    => sanitize_text_field( wp_strip_all_tags( $headline ) ),
             'post_content'  => wp_kses_post( $content ),
-            'post_excerpt'  => sanitize_text_field( $excerpt ),
+            'post_excerpt'  => sanitize_text_field( wp_strip_all_tags( $excerpt ) ),
             'post_status'   => 'publish',
-            'post_date'     => $date ? $date : current_time( 'mysql' ),
+            'post_date'     => $wp_date,
             'post_category' => array( $news_category_id ),
         );
 
@@ -180,17 +229,40 @@ class WP_RSS_Importer_Feed_Importer {
         }
 
         // Save metadata
-        update_post_meta( $post_id, '_source_permalink', esc_url_raw( $permalink ) );
+        update_post_meta( $post_id, '_source_permalink', esc_url_raw( $web_url ) );
         update_post_meta( $post_id, '_source_author', sanitize_text_field( $author_name ) );
         update_post_meta( $post_id, '_source_id', $source_id );
 
-        // Get and save featured image
-        $image_url = $this->get_featured_image( $item );
+        // Get and save featured image from multimedia array
+        $image_url = $this->get_featured_image( $article );
         if ( $image_url ) {
             $this->set_featured_image( $post_id, $image_url );
         }
 
         return $post_id;
+    }
+
+    /**
+     * Get featured image URL from NY Times article multimedia
+     *
+     * @param array $article The article data
+     * @return string|bool Image URL or false
+     */
+    private function get_featured_image( $article ) {
+        if ( ! isset( $article['multimedia'] ) || ! is_array( $article['multimedia'] ) ) {
+            return false;
+        }
+
+        // Look for the largest/best quality image
+        foreach ( $article['multimedia'] as $media ) {
+            if ( isset( $media['url'] ) && ! empty( $media['url'] ) ) {
+                // Construct full URL - NY Times multimedia URLs are relative
+                $image_url = 'https://www.nytimes.com/' . ltrim( $media['url'], '/' );
+                return $image_url;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -201,7 +273,7 @@ class WP_RSS_Importer_Feed_Importer {
      * @return string
      */
     private function get_excerpt( $content, $length = 250 ) {
-        $content = strip_tags( $content );
+        $content = wp_strip_all_tags( $content );
         $content = strip_shortcodes( $content );
 
         if ( strlen( $content ) <= $length ) {
@@ -216,71 +288,6 @@ class WP_RSS_Importer_Feed_Importer {
         }
 
         return $content . '...';
-    }
-
-    /**
-     * Get featured image URL from feed item
-     *
-     * @param SimplePie_Item $item The feed item
-     * @return string|bool Image URL or false
-     */
-    private function get_featured_image( $item ) {
-        // Method 1: Try media:thumbnail namespace (common in RSS feeds)
-        $namespaces = $item->get_item_tags( 'http://search.yahoo.com/mrss/', 'thumbnail' );
-        if ( ! empty( $namespaces[0]['attribs']['']['url'] ) ) {
-            return $namespaces[0]['attribs']['']['url'];
-        }
-
-        // Method 2: Try media:content namespace
-        $namespaces = $item->get_item_tags( 'http://search.yahoo.com/mrss/', 'content' );
-        if ( ! empty( $namespaces[0]['attribs']['']['url'] ) ) {
-            $type = isset( $namespaces[0]['attribs']['']['type'] ) ? $namespaces[0]['attribs']['']['type'] : '';
-            if ( empty( $type ) || strpos( $type, 'image/' ) === 0 ) {
-                return $namespaces[0]['attribs']['']['url'];
-            }
-        }
-
-        // Method 3: Try enclosure (media attachment)
-        $enclosure = $item->get_enclosure();
-        if ( $enclosure ) {
-            $link = $enclosure->get_link();
-            $type = $enclosure->get_type();
-
-            // Accept if it's an image type or if no type specified but URL looks like image
-            if ( ( $type && strpos( $type, 'image/' ) === 0 ) ||
-                 ( ! $type && preg_match( '/\.(jpg|jpeg|png|gif|webp)(\?|$)/i', $link ) ) ) {
-                return $link;
-            }
-        }
-
-        // Method 4: Try to get image from content
-        $content = $item->get_content();
-        if ( $content ) {
-            preg_match( '/<img[^>]+src=["\']([^"\']+)["\'][^>]*>/i', $content, $matches );
-            if ( ! empty( $matches[1] ) ) {
-                return $matches[1];
-            }
-        }
-
-        // Method 5: Try to get image from description (some feeds only have images here)
-        $description = $item->get_description();
-        if ( $description && $description !== $content ) {
-            preg_match( '/<img[^>]+src=["\']([^"\']+)["\'][^>]*>/i', $description, $matches );
-            if ( ! empty( $matches[1] ) ) {
-                return $matches[1];
-            }
-        }
-
-        // Method 6: Try Atom-specific summary with images
-        $summary = $item->get_item_tags( 'http://www.w3.org/2005/Atom', 'summary' );
-        if ( ! empty( $summary[0]['data'] ) ) {
-            preg_match( '/<img[^>]+src=["\']([^"\']+)["\'][^>]*>/i', $summary[0]['data'], $matches );
-            if ( ! empty( $matches[1] ) ) {
-                return $matches[1];
-            }
-        }
-
-        return false;
     }
 
     /**
