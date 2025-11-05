@@ -367,10 +367,13 @@ class WP_RSS_Importer_WP_API_Importer {
         // Remove query parameters from filename (e.g., ?v=123)
         $file_name = preg_replace( '/\?.*$/', '', $file_name );
 
+        // Use WordPress's file type checking (more reliable than mime_content_type)
+        $wp_filetype = wp_check_filetype( $file_name, null );
+
         // Prepare file array
         $file = array(
             'name'     => $file_name,
-            'type'     => mime_content_type( $temp_file ),
+            'type'     => $wp_filetype['type'],
             'tmp_name' => $temp_file,
             'error'    => 0,
             'size'     => filesize( $temp_file ),
