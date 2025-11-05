@@ -164,10 +164,17 @@ class WP_RSS_Importer_Admin {
                 </td>
             </tr>
             <tr class="nytimes-api-field" style="<?php echo ( $feed_type !== 'nytimes_api' ) ? 'display:none;' : ''; ?>">
-                <th><label for="nyt_section"><?php _e( 'Section Filter', 'wp-rss-importer' ); ?></label></th>
+                <th><label for="nyt_section"><?php _e( 'Section/Desk Filter', 'wp-rss-importer' ); ?></label></th>
                 <td>
-                    <input type="text" id="nyt_section" name="nyt_section" value="<?php echo esc_attr( get_post_meta( $post->ID, '_nyt_section', true ) ); ?>" class="regular-text" placeholder="Style">
-                    <p class="description"><?php _e( 'Filter by section (e.g., "Style", "Fashion & Style", "Arts"). Leave empty to search all sections.', 'wp-rss-importer' ); ?></p>
+                    <input type="text" id="nyt_section" name="nyt_section" value="<?php echo esc_attr( get_post_meta( $post->ID, '_nyt_section', true ) ); ?>" class="regular-text" placeholder="">
+                    <p class="description"><?php _e( 'Optional: Filter by section (e.g., "Style") or news desk (e.g., "desk:Styles"). Leave empty to search all.', 'wp-rss-importer' ); ?></p>
+                </td>
+            </tr>
+            <tr class="nytimes-api-field" style="<?php echo ( $feed_type !== 'nytimes_api' ) ? 'display:none;' : ''; ?>">
+                <th><label for="nyt_date_filter_days"><?php _e( 'Date Filter (Days)', 'wp-rss-importer' ); ?></label></th>
+                <td>
+                    <input type="number" id="nyt_date_filter_days" name="nyt_date_filter_days" value="<?php echo esc_attr( get_post_meta( $post->ID, '_nyt_date_filter_days', true ) ); ?>" class="small-text" placeholder="90" min="1">
+                    <p class="description"><?php _e( 'Optional: Only import articles from the last N days (e.g., 90 for last 3 months). Leave empty for all dates.', 'wp-rss-importer' ); ?></p>
                 </td>
             </tr>
         </table>
@@ -328,6 +335,11 @@ class WP_RSS_Importer_Admin {
         // Save NY Times section filter
         if ( isset( $_POST['nyt_section'] ) ) {
             update_post_meta( $post_id, '_nyt_section', sanitize_text_field( $_POST['nyt_section'] ) );
+        }
+
+        // Save NY Times date filter
+        if ( isset( $_POST['nyt_date_filter_days'] ) ) {
+            update_post_meta( $post_id, '_nyt_date_filter_days', absint( $_POST['nyt_date_filter_days'] ) );
         }
     }
 

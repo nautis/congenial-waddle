@@ -24,6 +24,7 @@ class WP_RSS_Importer_NYT_API_Importer {
         $api_key = get_post_meta( $source_id, '_nyt_api_key', true );
         $search_query = get_post_meta( $source_id, '_nyt_search_query', true );
         $section = get_post_meta( $source_id, '_nyt_section', true );
+        $date_filter_days = get_post_meta( $source_id, '_nyt_date_filter_days', true );
         $limit = get_post_meta( $source_id, '_feed_limit', true );
         $keyword_filter = get_post_meta( $source_id, '_keyword_filter', true );
 
@@ -43,9 +44,24 @@ class WP_RSS_Importer_NYT_API_Importer {
             'page'    => 0,
         );
 
-        // Add section filter if specified
+        // Add section/desk filter if specified
+        // Check if it's a news_desk filter (format: "desk:Value") or section_name filter
         if ( ! empty( $section ) ) {
-            $api_params['fq'] = 'section_name:"' . $section . '"';
+            if ( stripos( $section, 'desk:' ) === 0 ) {
+                // Extract desk name after "desk:"
+                $desk_name = trim( substr( $section, 5 ) );
+                $api_params['fq'] = 'news_desk:"' . $desk_name . '"';
+            } else {
+                // Default to section_name
+                $api_params['fq'] = 'section_name:"' . $section . '"';
+            }
+        }
+
+        // Add date filter if specified (filter to articles from last N days)
+        if ( ! empty( $date_filter_days ) && is_numeric( $date_filter_days ) ) {
+            $days = intval( $date_filter_days );
+            $begin_date = date( 'Ymd', strtotime( "-{$days} days" ) );
+            $api_params['begin_date'] = $begin_date;
         }
 
         $api_url = add_query_arg( $api_params, self::API_BASE_URL );
