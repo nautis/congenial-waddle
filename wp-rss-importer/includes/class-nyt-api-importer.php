@@ -80,6 +80,13 @@ class WP_RSS_Importer_NYT_API_Importer {
         $data = json_decode( $body, true );
 
         if ( ! isset( $data['response']['docs'] ) || ! is_array( $data['response']['docs'] ) ) {
+            // Log the actual response for debugging
+            error_log( sprintf(
+                'WP RSS Importer: NY Times API invalid response. URL: %s, Response: %s',
+                $api_url,
+                substr( $body, 0, 500 )
+            ) );
+
             $error_message = __( 'Invalid response from NY Times API.', 'wp-rss-importer' );
             update_post_meta( $source_id, '_last_error', $error_message );
             update_post_meta( $source_id, '_last_fetch', current_time( 'mysql' ) );
