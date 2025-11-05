@@ -44,16 +44,19 @@ class WP_RSS_Importer_NYT_API_Importer {
             'page'    => 0,
         );
 
-        // Add section/desk filter if specified
-        // Check if it's a news_desk filter (format: "desk:Value") or section_name filter
+        // Add section/desk/collection filter if specified
         if ( ! empty( $section ) ) {
-            if ( stripos( $section, 'desk:' ) === 0 ) {
+            if ( stripos( $section, 'collection:' ) === 0 ) {
+                // Extract collection URI after "collection:"
+                $collection_uri = trim( substr( $section, 11 ) );
+                $api_params['fq'] = 'collections.uri:"' . $collection_uri . '"';
+            } elseif ( stripos( $section, 'desk:' ) === 0 ) {
                 // Extract desk name after "desk:"
                 $desk_name = trim( substr( $section, 5 ) );
-                $api_params['fq'] = 'news_desk:"' . $desk_name . '"';
+                $api_params['fq'] = 'desk:"' . $desk_name . '"';
             } else {
                 // Default to section_name
-                $api_params['fq'] = 'section_name:"' . $section . '"';
+                $api_params['fq'] = 'section.name:"' . $section . '"';
             }
         }
 

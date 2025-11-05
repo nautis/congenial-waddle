@@ -164,10 +164,10 @@ class WP_RSS_Importer_Admin {
                 </td>
             </tr>
             <tr class="nytimes-api-field" style="<?php echo ( $feed_type !== 'nytimes_api' ) ? 'display:none;' : ''; ?>">
-                <th><label for="nyt_section"><?php _e( 'Section/Desk Filter', 'wp-rss-importer' ); ?></label></th>
+                <th><label for="nyt_section"><?php _e( 'Collection/Section/Desk Filter', 'wp-rss-importer' ); ?></label></th>
                 <td>
-                    <input type="text" id="nyt_section" name="nyt_section" value="<?php echo esc_attr( get_post_meta( $post->ID, '_nyt_section', true ) ); ?>" class="regular-text" placeholder="">
-                    <p class="description"><?php _e( 'Optional: Filter by section (e.g., "Style") or news desk (e.g., "desk:Styles"). Leave empty to search all.', 'wp-rss-importer' ); ?></p>
+                    <input type="text" id="nyt_section" name="nyt_section" value="<?php echo esc_attr( get_post_meta( $post->ID, '_nyt_section', true ) ); ?>" class="large-text" placeholder="collection:/spotlight/watches">
+                    <p class="description"><?php _e( 'Optional: Filter by collection URI (e.g., "collection:/spotlight/watches"), desk (e.g., "desk:Styles"), or section (e.g., "Fashion"). Leave empty to search all.', 'wp-rss-importer' ); ?></p>
                 </td>
             </tr>
             <tr class="nytimes-api-field" style="<?php echo ( $feed_type !== 'nytimes_api' ) ? 'display:none;' : ''; ?>">
