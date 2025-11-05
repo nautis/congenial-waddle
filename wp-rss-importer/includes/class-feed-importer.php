@@ -315,6 +315,23 @@ class WP_RSS_Importer_Feed_Importer {
         // Use WordPress's file type checking (more reliable than mime_content_type)
         $wp_filetype = wp_check_filetype( $file_name, null );
 
+        // If wp_check_filetype didn't detect the type, fallback to checking extension manually
+        if ( empty( $wp_filetype['type'] ) ) {
+            // Get MIME type directly from file
+            $finfo = finfo_open( FILEINFO_MIME_TYPE );
+            $mime_type = finfo_file( $finfo, $temp_file );
+            finfo_close( $finfo );
+            $wp_filetype['type'] = $mime_type;
+        }
+
+        // Log for debugging
+        error_log( sprintf(
+            'WP RSS Importer: Image %s - filename: %s, detected type: %s',
+            $image_url,
+            $file_name,
+            $wp_filetype['type']
+        ) );
+
         // Prepare file array
         $file = array(
             'name'     => $file_name,
