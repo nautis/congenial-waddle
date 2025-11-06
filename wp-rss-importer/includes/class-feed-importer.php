@@ -187,7 +187,10 @@ class WP_RSS_Importer_Feed_Importer {
         // Get and save featured image
         $image_url = $this->get_featured_image( $item );
         if ( $image_url ) {
+            error_log( sprintf( 'WP RSS Importer: Found image URL for post %d: %s', $post_id, $image_url ) );
             $this->set_featured_image( $post_id, $image_url );
+        } else {
+            error_log( sprintf( 'WP RSS Importer: No image found for post %d', $post_id ) );
         }
 
         return $post_id;
@@ -295,8 +298,14 @@ class WP_RSS_Importer_Feed_Importer {
         require_once( ABSPATH . 'wp-admin/includes/file.php' );
         require_once( ABSPATH . 'wp-admin/includes/image.php' );
 
+        // Add HTTP headers to bypass hotlink protection
+        add_filter( 'http_request_args', array( $this, 'add_image_download_headers' ), 10, 2 );
+
         // Download image to temp file
         $temp_file = download_url( $image_url );
+
+        // Remove filter after download
+        remove_filter( 'http_request_args', array( $this, 'add_image_download_headers' ), 10 );
 
         if ( is_wp_error( $temp_file ) ) {
             // Log the download error for debugging
@@ -380,5 +389,29 @@ class WP_RSS_Importer_Feed_Importer {
         set_post_thumbnail( $post_id, $attachment_id );
 
         return true;
+    }
+
+    /**
+     * Add headers to image download requests to bypass hotlink protection
+     *
+     * @param array $args HTTP request arguments
+     * @param string $url The URL being requested
+     * @return array Modified arguments
+     */
+    public function add_image_download_headers( $args, $url ) {
+        // Parse URL to get domain for referer
+        $parsed_url = parse_url( $url );
+        $referer = $parsed_url['scheme'] . '://' . $parsed_url['host'];
+
+        // Add referer and user agent headers
+        $args['headers'] = array_merge(
+            isset( $args['headers'] ) ? $args['headers'] : array(),
+            array(
+                'Referer' => $referer,
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            )
+        );
+
+        return $args;
     }
 }
