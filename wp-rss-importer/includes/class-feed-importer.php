@@ -67,6 +67,8 @@ class WP_RSS_Importer_Feed_Importer {
         $max_items = ! empty( $limit ) && is_numeric( $limit ) ? intval( $limit ) : 0;
         $items = $feed->get_items( 0, $max_items );
 
+        error_log( sprintf( 'WP RSS Importer: Processing %d items from source %d (%s)', count($items), $source_id, $feed_url ) );
+
         $imported_count = 0;
 
         foreach ( $items as $item ) {
@@ -82,11 +84,14 @@ class WP_RSS_Importer_Feed_Importer {
             }
 
             // Check if item already exists
-            if ( $this->item_exists( $item->get_permalink() ) ) {
+            $permalink = $item->get_permalink();
+            if ( $this->item_exists( $permalink ) ) {
+                error_log( sprintf( 'WP RSS Importer: Item already exists, skipping: %s', $permalink ) );
                 continue;
             }
 
             // Import the item
+            error_log( sprintf( 'WP RSS Importer: Creating new item from source %d: %s', $source_id, $item->get_title() ) );
             if ( $this->create_feed_item( $item, $source_id ) ) {
                 $imported_count++;
             }
@@ -133,6 +138,7 @@ class WP_RSS_Importer_Feed_Importer {
      * @return int|bool Post ID on success, false on failure
      */
     private function create_feed_item( $item, $source_id ) {
+        error_log( sprintf( 'WP RSS Importer: create_feed_item called for source %d', $source_id ) );
         $title = $item->get_title();
         $content = $item->get_content();
         $excerpt = $this->get_excerpt( $content, 250 );
@@ -161,7 +167,7 @@ class WP_RSS_Importer_Feed_Importer {
             'post_content'  => wp_kses_post( $content ),
             'post_excerpt'  => sanitize_text_field( $excerpt ),
             'post_status'   => 'publish',
-            'post_date'     => $date ? $date : current_time( 'mysql' ),
+            'post_date'     => current_time( 'mysql' ), // Always use current time to publish immediately
             'post_category' => array( $news_category_id ),
         );
 

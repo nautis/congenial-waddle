@@ -24,7 +24,7 @@ class WP_RSS_Importer_Activator {
 
         // Schedule cron job if not already scheduled
         if ( ! wp_next_scheduled( 'wp_rss_importer_fetch_feeds' ) ) {
-            wp_schedule_event( time(), 'hourly', 'wp_rss_importer_fetch_feeds' );
+            wp_schedule_event( time(), 'daily', 'wp_rss_importer_fetch_feeds' );
         }
     }
 }
